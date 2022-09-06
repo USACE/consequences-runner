@@ -1,12 +1,17 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 
+	"github.com/USACE/go-consequences/compute"
+	"github.com/USACE/go-consequences/hazardproviders"
+	"github.com/USACE/go-consequences/resultswriters"
+	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/usace/wat-go-sdk/plugin"
 )
 
@@ -45,69 +50,70 @@ func main() {
 func computePayload(payload plugin.ModelPayload) error {
 
 	if len(payload.Outputs) != 1 {
-		err := errors.New("expecting one output to be defined found " + len(payload.Outputs))
+		err := errors.New(fmt.Sprint("expecting one output to be defined found", len(payload.Outputs)))
 		logError(err, payload)
 		return err
 	}
 	if len(payload.Inputs) != 3 {
-		err := errors.New("expecting 3 inputs to be defined found " + len(payload.Inputs))
+		err := errors.New(fmt.Sprint("expecting 2 inputs to be defined found ", len(payload.Inputs)))
 		logError(err, payload)
 		return err
 	}
-	var modelResourceInfo plugin.ResourceInfo
-	var eventConfigurationResourceInfo plugin.ResourceInfo
-	foundModel := false
-	foundEventConfig := false
-	seedSetName := ""
+	var gpkgRI plugin.ResourceInfo
+	var depthGridRI plugin.ResourceInfo
+	foundDepthGrid := false
+	foundGPKG := false
 	for _, rfd := range payload.Inputs {
-		if strings.Contains(rfd.FileName, payload.Model.Name+".json") {
-			modelResourceInfo = rfd.ResourceInfo
-			foundModel = true
+		if strings.Contains(rfd.FileName, ".tif") {
+			depthGridRI = rfd.ResourceInfo
+			foundDepthGrid = true
 		}
-		if strings.Contains(rfd.FileName, "eventconfiguration.json") {
-			eventConfigurationResourceInfo = rfd.ResourceInfo
-			seedSetName = rfd.InternalPaths[0].PathName
-			foundEventConfig = true
+		if strings.Contains(rfd.FileName, ".gpkg") {
+			gpkgRI = rfd.ResourceInfo
+			foundGPKG = true
 		}
 	}
-	if !foundModel {
-		err := fmt.Errorf("could not find %s.json", payload.Model.Name)
+	if !foundDepthGrid {
+		err := fmt.Errorf("could not find tif file for hazard definitions")
 		logError(err, payload)
 		return err
 	}
-	if !foundEventConfig {
-		err := fmt.Errorf("could not find eventconfiguration.json")
+	if !foundGPKG {
+		err := fmt.Errorf("could not find .gpkg file for structure inventory")
 		logError(err, payload)
 		return err
 	}
-	modelBytes, err := plugin.DownloadObject(modelResourceInfo)
+	//download the gpkg? can this be virtualized in gdal?
+	gpkBytes, err := plugin.DownloadObject(gpkgRI)
 	if err != nil {
 		logError(err, payload)
 		return err
 	}
-	var fcm consequences.Model
-	err = json.Unmarshal(modelBytes, &fcm)
+	fp := "/app/data/structures.gpkg"
+	err = writeLocalBytes(gpkBytes, "/app/data/", fp)
 	if err != nil {
 		logError(err, payload)
 		return err
 	}
-	eventConfiguration, err := plugin.LoadEventConfiguration(eventConfigurationResourceInfo)
+	//initalize a structure provider
+	sp, err := structureprovider.InitGPK(fp, "nsi")
 	if err != nil {
 		logError(err, payload)
 		return err
 	}
-	//then we need to get the specific set of seeds.
-	seedSet, err := eventConfiguration.SeedSet(seedSetName)
+	//initialize a hazard provider
+	hp, err := hazardproviders.Init(fmt.Sprintf("/vsis3/%v", depthGridRI.Path)) //do i need to add vsis3?
 	if err != nil {
 		logError(err, payload)
 		return err
 	}
-	modelResult, err := fcm.Compute(seedSet)
-	if err != nil {
-		logError(err, payload)
-		return err
-	}
-	bytes, err := json.Marshal(modelResult)
+	//initalize a results writer
+	outfp := "/app/data/result.gpkg"
+	rw, err := resultswriters.InitGpkResultsWriter(outfp, "nsi_result")
+	//compute results
+	compute.StreamAbstract(hp, sp, rw)
+	//output read all bytes
+	bytes, err := ioutil.ReadFile(outfp)
 	if err != nil {
 		logError(err, payload)
 		return err
@@ -136,4 +142,19 @@ func logError(err error, payload plugin.ModelPayload) {
 		Sender:    "go-consequences-wat",
 		PayloadId: payload.Id,
 	})
+}
+func writeLocalBytes(b []byte, destinationRoot string, destinationPath string) error {
+	if _, err := os.Stat(destinationRoot); os.IsNotExist(err) {
+		os.MkdirAll(destinationRoot, 0644) //do i need to trim filename?
+	}
+	err := os.WriteFile(destinationPath, b, 0644)
+	if err != nil {
+		plugin.Log(plugin.Message{
+			Message: fmt.Sprintf("failure to write local file: %v\n\terror:%v", destinationPath, err),
+			Level:   plugin.ERROR,
+			Sender:  "go-consequences-wat",
+		})
+		return err
+	}
+	return nil
 }
