@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -18,10 +19,7 @@ func main() {
 	fmt.Println("consequences!")
 	pm, err := cc.InitPluginManager()
 	if err != nil {
-		pm.LogError(cc.Error{
-			ErrorLevel: cc.FATAL,
-			Error:      err.Error(),
-		})
+		log.Fatal(err.Error())
 		return
 	}
 	payload := pm.GetPayload()
@@ -39,11 +37,16 @@ func main() {
 	}
 	pm.ReportProgress(cc.StatusReport{
 		Status:   cc.SUCCEEDED,
-		Progress: 0,
+		Progress: 100,
 	})
 }
 func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
-
+	tablename := "nsi"
+	tableNameObject, ok := payload.Attributes["tableName"]
+	if ok {
+		tn := tableNameObject.(string)
+		tablename = tn
+	}
 	if len(payload.Outputs) != 1 {
 		err := errors.New(fmt.Sprint("expecting one output to be defined found", len(payload.Outputs)))
 		pm.LogError(cc.Error{
@@ -64,10 +67,16 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 	var depthGridRI cc.DataSource
 	foundDepthGrid := false
 	foundGPKG := false
+	isVrt := false
 	for _, rfd := range payload.Inputs {
 		if strings.Contains(rfd.Name, ".tif") {
 			depthGridRI = rfd
 			foundDepthGrid = true
+		}
+		if strings.Contains(rfd.Name, ".vrt") {
+			depthGridRI = rfd
+			foundDepthGrid = true
+			isVrt = true
 		}
 		if strings.Contains(rfd.Name, ".gpkg") {
 			gpkgRI = rfd
@@ -75,7 +84,7 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 		}
 	}
 	if !foundDepthGrid {
-		err := fmt.Errorf("could not find tif file for hazard definitions")
+		err := fmt.Errorf("could not find .tif or .vrt file for hazard definitions")
 		pm.LogError(cc.Error{
 			ErrorLevel: cc.FATAL,
 			Error:      err.Error(),
@@ -109,7 +118,7 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 		return err
 	}
 	//initalize a structure provider
-	sp, err := structureprovider.InitGPK(fp, "nsi")
+	sp, err := structureprovider.InitGPK(fp, tablename)
 	if err != nil {
 		pm.LogError(cc.Error{
 			ErrorLevel: cc.FATAL,
@@ -128,7 +137,15 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 	}
 	var hp hazardproviders.HazardProvider
 	if ds.StoreType == cc.S3 {
-		hp, err = hazardproviders.Init(fmt.Sprintf("/vsis3/%v", depthGridRI.Paths[0])) //do i need to add vsis3?
+		path := fmt.Sprintf("/vsis3/%v", depthGridRI.Paths[0])
+		if isVrt {
+			for _, p := range depthGridRI.Paths {
+				if strings.Contains(p, ".vrt") {
+					path = fmt.Sprintf("/vsis3/%v", p)
+				}
+			}
+		}
+		hp, err = hazardproviders.Init(path) //do i need to add vsis3?
 		if err != nil {
 			pm.LogError(cc.Error{
 				ErrorLevel: cc.FATAL,
@@ -136,7 +153,15 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 			})
 			return err
 		}
+		defer hp.Close()
 	} else {
+		if isVrt {
+			pm.LogError(cc.Error{
+				ErrorLevel: cc.FATAL,
+				Error:      "vrt files should be accessed directly from s3, please update your payload.",
+			})
+			return err
+		}
 		tifBytes, err := pm.GetFile(depthGridRI, 0)
 		if err != nil {
 			pm.LogError(cc.Error{
@@ -155,11 +180,20 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 			return err
 		}
 		hp, err = hazardproviders.Init(fp)
+		defer hp.Close()
 	}
 
 	//initalize a results writer
 	outfp := "/app/data/result.gpkg"
 	rw, err := resultswriters.InitGpkResultsWriter(outfp, "nsi_result")
+	if err != nil {
+		pm.LogError(cc.Error{
+			ErrorLevel: cc.FATAL,
+			Error:      err.Error(),
+		})
+		return err
+	}
+	defer rw.Close()
 	//compute results
 	compute.StreamAbstract(hp, sp, rw)
 	//output read all bytes
