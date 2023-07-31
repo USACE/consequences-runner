@@ -1,4 +1,4 @@
-# go-consequences-wat
-A go-consequences plugin for cloud wat.
+# consequences-runner
+A consequences plugin for cloud compute.
 
-This plugin provides consequences in cloud-wat as a base plugin for economic consequences.
+This plugin provides consequences in cloudcompute as a base plugin for economic consequences.
