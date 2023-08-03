@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,10 +14,13 @@ import (
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/usace/cc-go-sdk"
+	"github.com/usace/cc-go-sdk/plugin"
 )
 
+var pluginName string = "consequences"
+
 func main() {
-	fmt.Println("consequences!")
+	fmt.Println(fmt.Sprintf("%v!", pluginName))
 	pm, err := cc.InitPluginManager()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -55,8 +59,8 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 		})
 		return err
 	}
-	if len(payload.Inputs) != 3 {
-		err := errors.New(fmt.Sprint("expecting 2 inputs to be defined found ", len(payload.Inputs)))
+	if len(payload.Inputs) > 2 {
+		err := errors.New(fmt.Sprint("expecting at least 2 inputs to be defined found ", len(payload.Inputs)))
 		pm.LogError(cc.Error{
 			ErrorLevel: cc.FATAL,
 			Error:      err.Error(),
@@ -65,8 +69,10 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 	}
 	var gpkgRI cc.DataSource
 	var depthGridRI cc.DataSource
+	var seedsRI cc.DataSource
 	foundDepthGrid := false
 	foundGPKG := false
+	foundSeeds := false
 	isVrt := false
 	for _, rfd := range payload.Inputs {
 		if strings.Contains(rfd.Name, ".tif") {
@@ -81,6 +87,10 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 		if strings.Contains(rfd.Name, ".gpkg") {
 			gpkgRI = rfd
 			foundGPKG = true
+		}
+		if strings.Contains(rfd.Name, "seeds.json") {
+			seedsRI = rfd
+			foundSeeds = true
 		}
 	}
 	if !foundDepthGrid {
@@ -119,6 +129,42 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 	}
 	//initalize a structure provider
 	sp, err := structureprovider.InitGPK(fp, tablename)
+	if foundSeeds {
+		sp.SetDeterministic(false)
+		var ec plugin.EventConfiguration
+		eventConfigurationReader, err := pm.FileReader(seedsRI, 0)
+		if err != nil {
+			pm.LogError(cc.Error{
+				ErrorLevel: cc.ERROR,
+				Error:      err.Error(),
+			})
+			return err
+		}
+		defer eventConfigurationReader.Close()
+		err = json.NewDecoder(eventConfigurationReader).Decode(&ec)
+		if err != nil {
+			pm.LogError(cc.Error{
+				ErrorLevel: cc.ERROR,
+				Error:      err.Error(),
+			})
+			return err
+		}
+
+		seedSetName := pluginName
+		seedSet, ssok := ec.Seeds[seedSetName]
+		if !ssok {
+			pm.LogError(cc.Error{
+				ErrorLevel: cc.ERROR,
+				Error:      fmt.Errorf("no seeds found by name of %v", seedSetName).Error(),
+			})
+			return err
+		}
+		//fmt.Print(seedSet)
+		sp.SetSeed(seedSet.EventSeed)
+	} else {
+		sp.SetDeterministic(true)
+	}
+
 	if err != nil {
 		pm.LogError(cc.Error{
 			ErrorLevel: cc.FATAL,
