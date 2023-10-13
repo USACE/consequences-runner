@@ -1,12 +1,16 @@
-FROM golang:1.19-alpine3.16 AS dev
-#needs gdal
-RUN apk add --no-cache \
-    build-base \
-    gcc \
-    git
-
-# TODO: add prod build needs gdal
-# FROM osgeo/gdal:alpine-small-3.2.1 as prod
-#WORKDIR /app
-#COPY --from=dev /app/main .
-#CMD [ "./main" ]
+FROM ubuntu:20.04
+ENV TZ=America/New_York
+ENV PATH=/go/bin:$PATH
+ENV GOROOT=/go
+ENV GOPATH=/src/go
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 
+RUN echo $TZ > /etc/timezone 
+RUN mkdir /go 
+RUN mkdir -p /src/go 
+RUN apt update 
+RUN apt -y install gdal-bin gdal-data libgdal-dev 
+RUN apt -y install wget 
+RUN wget https://golang.org/dl/go1.19.13.linux-amd64.tar.gz -P / 
+RUN tar -xvzf /go1.19.13.linux-amd64.tar.gz -C / 
+RUN apt -y install vim 
+RUN apt -y install git

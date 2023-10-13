@@ -173,7 +173,7 @@ func computePayload(payload cc.Payload, pm *cc.PluginManager) error {
 		return err
 	}
 	//initialize a hazard provider
-	ds, err := pm.GetStore(depthGridRI.Name)
+	ds, err := pm.GetStore(depthGridRI.StoreName)
 	if err != nil {
 		pm.LogError(cc.Error{
 			ErrorLevel: cc.FATAL,
