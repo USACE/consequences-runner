@@ -43,9 +43,14 @@ func main() {
 	}
 	localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
 	err = pm.CopyToLocal(ds, 0, localStructures)
-
+	if err != nil {
+		log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
+	}
 	//initalize a structure provider
 	sp, err := structureprovider.InitGPK(localStructures, tablename)
+	if err != nil {
+		log.Fatalf("Terminating the plugin.  Unable to intialize a structure inventory provider : %s\n", err)
+	}
 	seedsDs, err := pm.GetInputDataSource(seedsDatasourceName)
 	if err != nil {
 		log.Println("No seeds provided.  Setting structure provider to deterministic.")
