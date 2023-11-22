@@ -8,6 +8,7 @@ import (
 	"github.com/USACE/go-consequences/compute"
 	"github.com/USACE/go-consequences/consequences"
 	"github.com/USACE/go-consequences/hazardproviders"
+	"github.com/USACE/go-consequences/hazards"
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/usace/cc-go-sdk"
@@ -87,7 +88,13 @@ func main() {
 
 	if depthGridStore.StoreType == cc.S3 {
 		path := fmt.Sprintf("/vsis3/mmc-storage-6%s/%v", depthGridStore.Parameters["root"], depthGridDs.Paths[0])
-		hp, err = hazardproviders.Init(path)
+		hp, err = hazardproviders.Init_CustomFunction(path, func(valueIn hazards.HazardData, hazard hazards.HazardEvent) (hazards.HazardEvent, error) {
+			if valueIn.Depth == 0 {
+				return hazard, hazardproviders.NoHazardFoundError{}
+			}
+			process := hazardproviders.DepthHazardFunction()
+			return process(valueIn, hazard)
+		})
 		if err != nil {
 			log.Fatalf("Failed to initialize hazard provider: %s\n", err)
 		}

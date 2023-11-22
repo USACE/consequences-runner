@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/USACE/go-consequences v0.0.0-20230802151026-f7d390e9433b
+	github.com/USACE/go-consequences v0.0.0-20231122193447-dec430d22183
 	github.com/aws/aws-sdk-go v1.44.325 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
