@@ -16,16 +16,18 @@ import (
 )
 
 const (
-	tablenameKey            string = "tableName"
-	tablenameDefault        string = "nsi"
-	structureDatasourceName string = "structures.gpkg"
-	seedsDatasourceName     string = "seeds.json"
-	depthgridDatasourceName string = "depth-grid"
+	tablenameKey            string = "tableName"       //plugin attribute key required
+	bucketKey               string = "bucket"          //plugin attribute key required - bucket only. i.e. mmc-storage-6 - will be combined with datastore root parameter
+	inventoryDriverKey      string = "inventoryDriver" //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	outputDriverKey         string = "outputDriver"    //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	outputFileNameKey       string = "outputFileName"  //plugin attribute key required should include extension compatable with driver name.
+	outputLayerName         string = "damages"
+	structureDatasourceName string = "Inventory"  //plugin datasource name required
+	seedsDatasourceName     string = "seeds.json" //plugin datasource name required
+	depthgridDatasourceName string = "depth-grid" //plugin datasource name required
+	outputDatasourceName    string = "Damages"    //plugin output datasource name required
 	localData               string = "/app/data"
 	pluginName              string = "consequences"
-	outputFileName          string = "results.gpkg"
-	outputLayerName         string = "nsi_result"
-	outputDatasourceName    string = "Damages Geopackage"
 )
 
 func main() {
@@ -35,20 +37,38 @@ func main() {
 		log.Fatal("Unable to initialize the plugin manager: %s\n", err)
 	}
 	pl := pm.GetPayload()
-	tablename := pl.Attributes.GetStringOrDefault("tableName", tablenameDefault)
+	tablename := pl.Attributes.GetStringOrFail(tablenameKey)
+	bucketname := pl.Attributes.GetStringOrFail(bucketKey)
+	inventoryDriver := pl.Attributes.GetStringOrFail(inventoryDriverKey)
+	outputDriver := pl.Attributes.GetStringOrFail(outputDriverKey)
+	outputFileName := pl.Attributes.GetStringOrFail(outputFileNameKey)
 
-	//get structure geopackage
+	//get structure inventory datasource
 	ds, err := pm.GetInputDataSource(structureDatasourceName)
 	if err != nil {
 		log.Fatalf("Terminating the plugin.  Unable to get the structures data source : %s\n", err)
 	}
-	localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
-	err = pm.CopyToLocal(ds, 0, localStructures)
-	if err != nil {
-		log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
+	fp := ds.Paths[0]
+	if inventoryDriver != "PARQUET" {
+		if inventoryDriver != "GPKG" || inventoryDriver != "JSON" {
+			log.Fatalf("Terminating the plugin.  Only GPKG, SHP or PARQUET drivers support at this time\n", err)
+		}
+		localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
+		err = pm.CopyToLocal(ds, 0, localStructures)
+		if err != nil {
+			log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
+		}
+		fp = localStructures
+	} else {
+		dsStore, err := pm.GetStore(ds.StoreName)
+		if err != nil {
+			log.Fatalf("Terminating the plugin.  Unable to to remote structure bytes : %s\n", err)
+		}
+		fp = fmt.Sprintf("/vsis3/%s%s/%v", bucketname, dsStore.Parameters["root"], ds.Paths[0])
 	}
+
 	//initalize a structure provider
-	sp, err := structureprovider.InitGPK(localStructures, tablename)
+	sp, err := structureprovider.InitStructureProvider(fp, tablename, inventoryDriver)
 	if err != nil {
 		log.Fatalf("Terminating the plugin.  Unable to intialize a structure inventory provider : %s\n", err)
 	}
@@ -87,7 +107,7 @@ func main() {
 	var hp hazardproviders.HazardProvider
 
 	if depthGridStore.StoreType == cc.S3 {
-		path := fmt.Sprintf("/vsis3/mmc-storage-6%s/%v", depthGridStore.Parameters["root"], depthGridDs.Paths[0])
+		path := fmt.Sprintf("/vsis3/%s%s/%v", bucketname, depthGridStore.Parameters["root"], depthGridDs.Paths[0])
 		hp, err = hazardproviders.Init_CustomFunction(path, func(valueIn hazards.HazardData, hazard hazards.HazardEvent) (hazards.HazardEvent, error) {
 			if valueIn.Depth == 0 {
 				return hazard, hazardproviders.NoHazardFoundError{}
@@ -105,9 +125,9 @@ func main() {
 	var rw consequences.ResultsWriter
 
 	func() {
-		rw, err = resultswriters.InitGpkResultsWriter(outfp, outputLayerName)
+		rw, err = resultswriters.InitSpatialResultsWriter(outfp, outputLayerName, outputDriver)
 		if err != nil {
-			log.Fatalf("Failed to initilize Geopackage result writer: %s\n", err)
+			log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
 		}
 		defer rw.Close()
 		//compute results

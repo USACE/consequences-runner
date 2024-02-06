@@ -1,16 +1,19 @@
-FROM ubuntu:20.04
+FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3
+
 ENV TZ=America/New_York
 ENV PATH=/go/bin:$PATH
 ENV GOROOT=/go
 ENV GOPATH=/src/go
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 
-RUN echo $TZ > /etc/timezone 
-RUN mkdir /go 
-RUN mkdir -p /src/go 
-RUN apt update 
-RUN apt -y install gdal-bin gdal-data libgdal-dev 
-RUN apt -y install wget 
-RUN wget https://golang.org/dl/go1.19.13.linux-amd64.tar.gz -P / 
-RUN tar -xvzf /go1.19.13.linux-amd64.tar.gz -C / 
-RUN apt -y install vim 
-RUN apt -y install git
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &&\
+    mkdir /go &&\
+    mkdir -p /src/go &&\
+    apt update &&\
+    apt -y install build-essential &&\
+	apt -y install pkg-config &&\
+    apt -y install gdal-bin gdal-data libgdal-dev &&\
+    apt -y install wget &&\
+    wget https://golang.org/dl/go1.19.13.linux-amd64.tar.gz -P / &&\
+    tar -xvzf /go1.19.13.linux-amd64.tar.gz -C / &&\
+    apt -y install vim &&\
+    apt -y install git
