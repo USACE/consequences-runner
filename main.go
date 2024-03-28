@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/USACE/go-consequences/compute"
 	"github.com/USACE/go-consequences/consequences"
@@ -34,7 +35,7 @@ func main() {
 
 	pm, err := cc.InitPluginManager()
 	if err != nil {
-		log.Fatal("Unable to initialize the plugin manager: %s\n", err)
+		log.Fatalf("Unable to initialize the plugin manager: %s\n", err.Error())
 	}
 	pl := pm.GetPayload()
 	tablename := pl.Attributes.GetStringOrFail(tablenameKey)
@@ -50,8 +51,8 @@ func main() {
 	}
 	fp := ds.Paths[0]
 	if inventoryDriver != "PARQUET" {
-		if inventoryDriver != "GPKG" || inventoryDriver != "JSON" {
-			log.Fatalf("Terminating the plugin.  Only GPKG, SHP or PARQUET drivers support at this time\n", err)
+		if strings.Compare(inventoryDriver, "GPKG") != 0 || strings.Compare(inventoryDriver, "JSON") != 0 {
+			log.Fatal("Terminating the plugin.  Only GPKG, SHP or PARQUET drivers support at this time\n", err)
 		}
 		localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
 		err = pm.CopyToLocal(ds, 0, localStructures)
