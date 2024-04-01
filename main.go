@@ -29,7 +29,7 @@ const (
 	depthgridDatasourceName string = "depth-grid" //plugin datasource name required
 	outputDatasourceName    string = "Damages"    //plugin output datasource name required
 	localData               string = "/app/data"
-	pluginName              string = "consequences"
+	pluginName              string = "consequences-runner"
 )
 
 func main() {
@@ -67,6 +67,7 @@ func main() {
 			log.Fatalf("Terminating the plugin.  Unable to to remote structure bytes : %s\n", err)
 		}
 		fp = fmt.Sprintf("/vsis3/%s%s/%v", bucketname, dsStore.Parameters["root"], ds.Paths[0])
+		log.Printf("connecting to %v", fp)
 	}
 
 	//initalize a structure provider

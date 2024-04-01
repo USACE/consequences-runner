@@ -18,3 +18,6 @@ func Test_ConvertParquet(t *testing.T) {
 	ConvertGpkgToParquet("Upper Kanawha")
 	ConvertGpkgToParquet("Upper New at Claytor")
 }
+func Test_Main(t *testing.T) {
+	main()
+}
