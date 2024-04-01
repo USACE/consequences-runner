@@ -27,6 +27,8 @@ RUN go build
 
 
 FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3 as prod
+RUN apt update &&\
+    apt -y install gdal-bin gdal-data libgdal-dev &&\
 WORKDIR /app
 COPY --from=builder /app/consequences-runner/consequences-runner .
 CMD ["/app/consequences-runner"]

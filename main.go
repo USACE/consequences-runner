@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/USACE/go-consequences/consequences"
@@ -29,7 +30,7 @@ const (
 	depthgridDatasourceName string = "depth-grid" //plugin datasource name required
 	outputDatasourceName    string = "Damages"    //plugin output datasource name required
 	localData               string = "/app/data"
-	pluginName              string = "consequences-runner"
+	pluginName              string = "consequences"
 )
 
 func main() {
@@ -126,6 +127,9 @@ func main() {
 	//initalize a results writer
 	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
 	projected, ok := hp.(geography.Projected)
+	if _, err := os.Stat(localData); os.IsNotExist(err) {
+		os.MkdirAll(localData, 0644) //do i need to trim filename?
+	}
 	var rw consequences.ResultsWriter
 	if ok {
 		sr := projected.SpatialReference()
