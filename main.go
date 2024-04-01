@@ -6,14 +6,15 @@ import (
 	"log"
 	"strings"
 
-	"github.com/USACE/go-consequences/compute"
 	"github.com/USACE/go-consequences/consequences"
+	"github.com/USACE/go-consequences/geography"
 	"github.com/USACE/go-consequences/hazardproviders"
 	"github.com/USACE/go-consequences/hazards"
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/usace/cc-go-sdk"
 	"github.com/usace/cc-go-sdk/plugin"
+	"github.com/usace/consequences-runner/actions"
 )
 
 const (
@@ -123,21 +124,28 @@ func main() {
 	}
 	//initalize a results writer
 	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
+	projected, ok := hp.(geography.Projected)
 	var rw consequences.ResultsWriter
-
-	func() {
+	if ok {
+		sr := projected.SpatialReference()
+		rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+		if err != nil {
+			log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
+		}
+	} else {
+		//could be dangerous
+		log.Printf("hazard provider does not implement geography.projected, results may not be reasonable assumed 4326")
 		rw, err = resultswriters.InitSpatialResultsWriter(outfp, outputLayerName, outputDriver)
 		if err != nil {
 			log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
 		}
-		defer rw.Close()
-		//compute results
-		compute.StreamAbstract(hp, sp, rw)
-	}()
+	}
+
+	actions.Compute(hp, sp, rw)
 
 	remoteDs, err := pm.GetOutputDataSource(outputDatasourceName)
 	if err != nil {
-		log.Fatalf("Unable to load the remote output data source: %s\n", err)
+		log.Fatalf("Unable to find the output data source: %s\n", err)
 	}
 	err = pm.CopyToRemote(outfp, remoteDs, 0)
 	if err != nil {
