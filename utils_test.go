@@ -1,6 +1,11 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"log"
+	"strings"
+	"testing"
+)
 
 func Test_ConvertParquet(t *testing.T) {
 	//ConvertGpkgToParquet("Bluestone Local")
@@ -20,4 +25,14 @@ func Test_ConvertParquet(t *testing.T) {
 }
 func Test_Main(t *testing.T) {
 	main()
+}
+func Test_Logic(t *testing.T) {
+	inventoryDriver := "SHP"
+	result := strings.Compare(inventoryDriver, "GPKG")
+	fmt.Println(result)
+	result2 := strings.Compare(inventoryDriver, "JSON")
+	fmt.Println(result2)
+	if strings.Compare(inventoryDriver, "GPKG") == 0 || strings.Compare(inventoryDriver, "JSON") == 0 {
+		log.Fatal("Terminating the plugin.  Only GPKG, SHP or PARQUET drivers support at this time\n")
+	}
 }

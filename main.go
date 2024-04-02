@@ -53,15 +53,17 @@ func main() {
 	}
 	fp := ds.Paths[0]
 	if inventoryDriver != "PARQUET" {
-		if strings.Compare(inventoryDriver, "GPKG") != 0 || strings.Compare(inventoryDriver, "JSON") != 0 {
-			log.Fatal("Terminating the plugin.  Only GPKG, SHP or PARQUET drivers support at this time\n", err)
+		if strings.Compare(inventoryDriver, "GPKG") == 0 || strings.Compare(inventoryDriver, "GeoJSON") == 0 {
+			localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
+			err = pm.CopyToLocal(ds, 0, localStructures)
+			if err != nil {
+				log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
+			}
+			fp = localStructures
+		} else {
+			log.Fatal("Terminating the plugin.  Only GPKG, GeoJSON or PARQUET drivers support at this time\n", err)
 		}
-		localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
-		err = pm.CopyToLocal(ds, 0, localStructures)
-		if err != nil {
-			log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
-		}
-		fp = localStructures
+
 	} else {
 		dsStore, err := pm.GetStore(ds.StoreName)
 		if err != nil {
