@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/USACE/go-consequences/consequences"
 	"github.com/USACE/go-consequences/geography"
@@ -34,7 +36,12 @@ const (
 )
 
 func main() {
-
+	log.Println(time.Now())
+	t := time.Now()
+	//make sure a local directory exists
+	if _, err := os.Stat(localData); os.IsNotExist(err) {
+		os.MkdirAll(localData, 0644) //do i need to trim filename?
+	}
 	pm, err := cc.InitPluginManager()
 	if err != nil {
 		log.Fatalf("Unable to initialize the plugin manager: %s\n", err.Error())
@@ -54,7 +61,7 @@ func main() {
 	fp := ds.Paths[0]
 	if inventoryDriver != "PARQUET" {
 		if strings.Compare(inventoryDriver, "GPKG") == 0 || strings.Compare(inventoryDriver, "GeoJSON") == 0 {
-			localStructures := fmt.Sprintf("%s/%s", localData, structureDatasourceName)
+			localStructures := fmt.Sprintf("%s/%s", localData, filepath.Base(ds.Paths[0]))
 			err = pm.CopyToLocal(ds, 0, localStructures)
 			if err != nil {
 				log.Fatalf("Terminating the plugin.  Unable to copy structure bytes local : %s\n", err)
@@ -129,9 +136,7 @@ func main() {
 	//initalize a results writer
 	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
 	projected, ok := hp.(geography.Projected)
-	if _, err := os.Stat(localData); os.IsNotExist(err) {
-		os.MkdirAll(localData, 0644) //do i need to trim filename?
-	}
+
 	var rw consequences.ResultsWriter
 	if ok {
 		sr := projected.SpatialReference()
@@ -158,4 +163,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to copy to the remote output data source: %s\n", err)
 	}
+	log.Println(time.Now())
+	s := time.Now().Sub(t)
+	log.Println(s)
 }
