@@ -54,7 +54,7 @@ func ConvertGpkgToParquet(geopackageName string) {
 	fmt.Printf("Wrote %v bytes to %v", size, localpath)
 	func() {
 		//build a gpkg strucure provider
-		gsp, err := structureprovider.InitGPK(localpath, geopackageName)
+		gsp, err := structureprovider.InitStructureProvider(localpath, geopackageName, "GPKG")
 		gsp.SetDeterministic(true)
 		if err != nil {
 			log.Fatal(err)

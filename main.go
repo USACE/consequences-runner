@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,18 +22,20 @@ import (
 )
 
 const (
-	tablenameKey            string = "tableName"       //plugin attribute key required
-	bucketKey               string = "bucket"          //plugin attribute key required - bucket only. i.e. mmc-storage-6 - will be combined with datastore root parameter
-	inventoryDriverKey      string = "inventoryDriver" //plugin attribute key required preferably "PARQUET", could be "GPKG"
-	outputDriverKey         string = "outputDriver"    //plugin attribute key required preferably "PARQUET", could be "GPKG"
-	outputFileNameKey       string = "outputFileName"  //plugin attribute key required should include extension compatable with driver name.
-	outputLayerName         string = "damages"
-	structureDatasourceName string = "Inventory"  //plugin datasource name required
-	seedsDatasourceName     string = "seeds.json" //plugin datasource name required
-	depthgridDatasourceName string = "depth-grid" //plugin datasource name required
-	outputDatasourceName    string = "Damages"    //plugin output datasource name required
-	localData               string = "/app/data"
-	pluginName              string = "consequences"
+	tablenameKey               string = "tableName"            //plugin attribute key required
+	studyAreaKey               string = "studyArea"            // plugin attribute key required - describes what seedset to use.
+	bucketKey                  string = "bucket"               //plugin attribute key required - bucket only. i.e. mmc-storage-6 - will be combined with datastore root parameter
+	inventoryDriverKey         string = "inventoryDriver"      //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	outputDriverKey            string = "outputDriver"         //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	outputFileNameKey          string = "outputFileName"       //plugin attribute key required should include extension compatable with driver name.
+	useKnowledgeUncertaintyKey string = "knowledgeUncertainty" //plugin attribute key required -
+	outputLayerName            string = "damages"
+	structureDatasourceName    string = "Inventory"  //plugin datasource name required
+	seedsDatasourceName        string = "seeds.json" //plugin datasource name required
+	depthgridDatasourceName    string = "depth-grid" //plugin datasource name required
+	outputDatasourceName       string = "Damages"    //plugin output datasource name required
+	localData                  string = "/app/data"
+	pluginName                 string = "consequences"
 )
 
 func main() {
@@ -48,11 +51,15 @@ func main() {
 	}
 	pl := pm.GetPayload()
 	tablename := pl.Attributes.GetStringOrFail(tablenameKey)
+	studyArea := pl.Attributes.GetStringOrFail(studyAreaKey)
 	bucketname := pl.Attributes.GetStringOrFail(bucketKey)
 	inventoryDriver := pl.Attributes.GetStringOrFail(inventoryDriverKey)
 	outputDriver := pl.Attributes.GetStringOrFail(outputDriverKey)
 	outputFileName := pl.Attributes.GetStringOrFail(outputFileNameKey)
-
+	useKnowledgeUncertainty, err := strconv.ParseBool(pl.Attributes.GetStringOrFail(useKnowledgeUncertaintyKey))
+	if err != nil {
+		log.Fatalf("Terminating the plugin.  Unable to parse knolwedge uncertainty to boolean : %s\n", err)
+	}
 	//get structure inventory datasource
 	ds, err := pm.GetInputDataSource(structureDatasourceName)
 	if err != nil {
@@ -101,11 +108,17 @@ func main() {
 		if err != nil {
 			log.Fatalf("Invalid seeds.json: %s\n", err)
 		}
-		seedSet, ssok := ec.Seeds[pluginName]
+		seedQuery := fmt.Sprintf("%v_%v", pluginName, studyArea)
+		seedSet, ssok := ec.Seeds[seedQuery]
 		if !ssok {
 			log.Fatalf("no seeds found by name of %v", pluginName)
 		}
-		sp.SetSeed(seedSet.EventSeed)
+		if useKnowledgeUncertainty {
+			sp.SetSeed(seedSet.RealizationSeed)
+		} else {
+			sp.SetSeed(seedSet.EventSeed)
+		}
+
 	}
 
 	//initialize a hazard provider

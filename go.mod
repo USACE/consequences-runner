@@ -12,12 +12,12 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
-	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3 // indirect
-	gonum.org/v1/gonum v0.14.0 // indirect
+	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
+	gonum.org/v1/gonum v0.15.0 // indirect
 )
 
 require (
-	github.com/USACE/go-consequences v0.0.0-20240401141754-76e5a5b350bc
+	github.com/USACE/go-consequences v0.0.0-20240405205703-d8e589bd79ac
 	github.com/aws/aws-sdk-go v1.44.325 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
