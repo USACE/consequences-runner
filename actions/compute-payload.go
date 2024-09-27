@@ -177,7 +177,7 @@ func ComputeFrequencyEvent(a cc.Action) error {
 	defer rw.Close()
 
 	ComputeMultiFrequency(hps, frequencies, sp, rw)
-	return errors.New("under construction")
+	return nil
 }
 func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64, sp consequences.StreamProvider, w consequences.ResultsWriter) {
 	fmt.Printf("Computing %v frequencies\n", len(freqs))
@@ -192,7 +192,7 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 		return
 	}
 	//set up output tables for all frequencies.
-	header := []string{"ORIG_ID", "REPVAL", "STORY", "FOUND_T", "FOUND_H", "OccType", "DamCat", "BASEFIN", "FFH", "DEMFT", "BAAL", "CAAL", "TAAL", "PROB"}
+	header := []string{"ORIG_ID", "REPVAL", "STORY", "FOUND_T", "FOUND_H", "x", "y", "OccType", "DamCat", "BASEFIN", "FFH", "DEMFT", "BAAL", "CAAL", "TAAL", "PROB"}
 
 	for _, f := range freqs {
 		header = append(header, fmt.Sprintf("%2.6fS", f))
@@ -205,7 +205,7 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 		if !sok {
 			return
 		}
-		results := []interface{}{s.Name, s.StructVal, s.NumStories, s.FoundType, s.FoundHt, s.OccType.Name, s.DamCat, "unkown", s.FoundHt + s.GroundElevation, s.GroundElevation, 0.0, 0.0, 0.0, 0.0}
+		results := []interface{}{s.Name, s.StructVal, s.NumStories, s.FoundType, s.FoundHt, s.Location().X, s.Location().Y, s.OccType.Name, s.DamCat, "unkown", s.FoundHt + s.GroundElevation, s.GroundElevation, 0.0, 0.0, 0.0, 0.0}
 
 		sEADs := make([]float64, len(freqs))
 		cEADs := make([]float64, len(freqs))
@@ -244,7 +244,10 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 				}
 				results = append(results, sEADs[index])
 				results = append(results, cEADs[index])
-				b, _ := json.Marshal(d)
+				b, err := json.Marshal(d)
+				if err != nil {
+					log.Fatal(err)
+				}
 				shaz := string(b)
 				results = append(results, shaz)
 			} else {
@@ -254,12 +257,12 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 				results = append(results, "no hazard")
 			}
 		}
-		results[13] = firstProb
+		results[15] = firstProb
 		sEAD := compute.ComputeSpecialEAD(sEADs, freqs) //use compute special ead to not create triangle below the most frequent event
-		results[10] = sEAD
+		results[12] = sEAD
 		cEAD := compute.ComputeSpecialEAD(cEADs, freqs) //use compute special ead to not create triangle below the most frequent event
-		results[11] = cEAD
-		results[12] = sEAD + cEAD
+		results[13] = cEAD
+		results[14] = sEAD + cEAD
 		var ret = consequences.Result{Headers: header, Result: results}
 		if gotWet {
 			w.Write(ret)
