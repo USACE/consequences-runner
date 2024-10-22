@@ -12,6 +12,7 @@ import (
 	"github.com/USACE/go-consequences/compute"
 	"github.com/USACE/go-consequences/consequences"
 	"github.com/USACE/go-consequences/geography"
+	gc "github.com/USACE/go-consequences/hazardproviders"
 	"github.com/USACE/go-consequences/hazards"
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
@@ -93,11 +94,26 @@ func ComputeFEMAFrequencyEvent(a cc.Action) error {
 		return errors.New("hazard grids have different numbers of paths than the frequencies list")
 	}
 	hps := make([]lhp.Mean_and_stdev_HazardProvider, 0)
+	process := func(valueIn hazards.HazardData, hazard hazards.HazardEvent) (hazards.HazardEvent, error) {
+		if valueIn.Depth <= 0 {
+			return hazard, gc.NoHazardFoundError{}
+		}
+		if valueIn.Velocity <= 0 {
+			return hazard, gc.NoHazardFoundError{}
+		}
+		h := hazards.HazardData{
+			Depth:    valueIn.Depth,
+			Velocity: valueIn.Velocity,
+		}
+		e := hazards.HazardDataToMultiParameter(h)
+		return e, nil
+	}
 	for i, dp := range MeanDepthGridPaths {
 		hp, err := lhp.Init(dp, StdevDepthGridPaths[i], MeanVelocityGridPaths[i], StdevVelocityGridPaths[i], verticalslices)
 		if err != nil {
 			return err
 		}
+		hp.SetProcess(process)
 		hps = append(hps, hp)
 	}
 	// inventory path expected to be a local path
@@ -162,6 +178,15 @@ func ComputeMultiFrequencyMeanStdev(hps []lhp.Mean_and_stdev_HazardProvider, fre
 		for index, hp := range hps {
 			d, err := hp.Hazards(geography.Location{X: f.Location().X, Y: f.Location().Y})
 			//compute damages based on hazard being able to provide depth
+			if err != nil {
+				results = append(results, 0.0)
+				results = append(results, 0.0)
+				results = append(results, 0.0)
+				results = append(results, 0.0)
+				results = append(results, "no-hazard")
+				results = append(results, "no-hazard")
+				continue
+			}
 			meanSliceDamage := 0.0
 			meanSliceContent := 0.0
 			meanSliceDepth := 0.0
@@ -208,21 +233,26 @@ func ComputeMultiFrequencyMeanStdev(hps []lhp.Mean_and_stdev_HazardProvider, fre
 
 			msEADs[index] = meanSliceDamage
 			mcEADs[index] = meanSliceContent
-			ssEADs[index] = stdevSliceDamage
-			scEADs[index] = stdevSliceContent
-			meanHazard := hazards.HazardData{
+			ssEADs[index] = math.Sqrt(stdevSliceDamage)
+			scEADs[index] = math.Sqrt(stdevSliceContent)
+			meanHazarddata := hazards.HazardData{
 				Depth:    meanSliceDepth,
-				Velocity: meanSliceVelocity,
+				Velocity: math.Sqrt(meanSliceVelocity),
 			}
-			stdevHazard := hazards.HazardData{
+			stdevHazarddata := hazards.HazardData{
 				Depth:    stdevSliceDepth,
-				Velocity: stdevSliceVelocity,
+				Velocity: math.Sqrt(stdevSliceVelocity),
 			}
+			meanHazard := hazards.HazardDataToMultiParameter(meanHazarddata)
+			stdevHazard := hazards.HazardDataToMultiParameter(stdevHazarddata)
 			results = append(results, msEADs[index])
 			results = append(results, ssEADs[index])
 			results = append(results, mcEADs[index])
 			results = append(results, scEADs[index])
 			b, err := json.Marshal(meanHazard)
+			if err != nil {
+				log.Fatal(err)
+			}
 			stdevb, err := json.Marshal(stdevHazard)
 			if err != nil {
 				log.Fatal(err)
@@ -247,7 +277,13 @@ func ComputeMultiFrequencyMeanStdev(hps []lhp.Mean_and_stdev_HazardProvider, fre
 
 }
 func meanAndStdev(mean float64, stdev float64, sampleSize int, value float64) (float64, float64) {
-	stdev = (((float64(sampleSize-2) / float64(sampleSize-1)) * stdev) + (math.Pow((value-mean), 2))/float64(sampleSize))
-	mean = mean + ((value - mean) / float64(sampleSize))
+	if sampleSize == 1 {
+		stdev = 0
+		mean = value
+	} else {
+		stdev = (((float64(sampleSize-2) / float64(sampleSize-1)) * stdev) + (math.Pow((value-mean), 2))/float64(sampleSize))
+		mean = mean + ((value - mean) / float64(sampleSize))
+	}
+
 	return mean, stdev
 }

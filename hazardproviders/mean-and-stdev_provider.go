@@ -58,7 +58,7 @@ func (chp Mean_and_stdev_HazardProvider) Hazards(l geography.Location) ([]hazard
 	if err != nil {
 		return h, err
 	}
-	mv, err := chp.meandepthcr.ProvideValue(l)
+	mv, err := chp.meanvelocitycr.ProvideValue(l)
 	if err != nil {
 		return h, err
 	}

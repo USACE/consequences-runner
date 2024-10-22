@@ -47,3 +47,29 @@ func Test_ComputeMultiFrequency(t *testing.T) {
 		t.Fail()
 	}
 }
+func Test_ComputeFEMAMultiFrequency(t *testing.T) {
+	a := cc.Action{
+		Name:        "compute-fema-frequency",
+		Type:        "compute-fema-frequency",
+		Description: "compute-fema-frequency",
+		Parameters: map[string]any{
+			"tableName":            "nsi",
+			"Inventory":            "/workspaces/consequences-runner/data/Bluestone Local_unadjusted.gpkg",
+			"inventoryDriver":      "GPKG",
+			"frequencies":          ".1, .04, .02, .01, .005, .002",
+			"vertical-slice":       ".1, .2, .3, .4, .5, .6, .7, .8, .9",
+			"mean-depth-grids":     "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_500yr.tif",
+			"mean-velocity-grids":  "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_500yr.tif",
+			"stdev-depth-grids":    "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_500yr.tif",
+			"stdev-velocity-grids": "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_500yr.tif",
+			"outputDriver":         "ESRI Shapefile",
+			"outputFileName":       "/workspaces/consequences-runner/data/BluestoneLocal_consequences_6.shp",
+			"damage-functions":     "/workspaces/consequences-runner/data/Inland_FFRD_damageFunctions.json",
+		},
+	}
+	err := ComputeFEMAFrequencyEvent(a)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+}
