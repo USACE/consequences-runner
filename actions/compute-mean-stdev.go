@@ -1,0 +1,253 @@
+package actions
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"math"
+	"strconv"
+	"strings"
+
+	"github.com/USACE/go-consequences/compute"
+	"github.com/USACE/go-consequences/consequences"
+	"github.com/USACE/go-consequences/geography"
+	"github.com/USACE/go-consequences/hazards"
+	"github.com/USACE/go-consequences/resultswriters"
+	"github.com/USACE/go-consequences/structureprovider"
+	"github.com/USACE/go-consequences/structures"
+	"github.com/usace/cc-go-sdk"
+	lhp "github.com/usace/consequences-runner/hazardproviders"
+)
+
+const (
+	//tablenameKey string = "tableName" //plugin attribute key required
+	//studyAreaKey               string = "studyArea"            // plugin attribute key required - describes what seedset to use.
+	//bucketKey                  string = "bucket"               //plugin attribute key required - bucket only. i.e. mmc-storage-6 - will be combined with datastore root parameter
+	//inventoryDriverKey         string = "inventoryDriver"      //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	//outputDriverKey            string = "outputDriver"         //plugin attribute key required preferably "PARQUET", could be "GPKG"
+	//outputFileNameKey          string = "outputFileName"       //plugin attribute key required should include extension compatable with driver name.
+	//useKnowledgeUncertaintyKey string = "knowledgeUncertainty" //plugin attribute key required -
+	//outputLayerName            string = "damages"
+	//seedsDatasourceName        string = "seeds.json" //plugin datasource name required
+	meandepthgridDatasourceName     string = "mean-depth-grids"     //plugin datasource name required
+	stdevdepthgridDatasourceName    string = "stdev-depth-grids"    //plugin datasource name required
+	meanvelocitygridDatasourceName  string = "mean-velocity-grids"  //plugin datasource name required
+	stdevvelocitygridDatasourceName string = "stdev-velocity-grids" //plugin datasource name required
+	verticalSliceName               string = "vertical-slice"
+	//outputDatasourceName    string = "Damages"    //plugin output datasource name required
+	//localData               string = "/app/data"
+	//pluginName              string = "consequences"
+	//FrequenciesKey          string = "frequencies"      //expected to be comma separated string
+	//inventoryPathKey        string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
+	//damageFunctionPathKey   string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+)
+
+func ComputeFEMAFrequencyEvent(a cc.Action) error {
+	// get all relevant parameters
+	tablename := a.Parameters.GetStringOrFail(tablenameKey)
+	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
+	meandepthGridPathString := a.Parameters.GetStringOrFail(meandepthgridDatasourceName)         // expected this is a vsis3 object
+	meanvelocityGridPathString := a.Parameters.GetStringOrFail(meanvelocitygridDatasourceName)   // expected this is a vsis3 object
+	stdevdepthGridPathString := a.Parameters.GetStringOrFail(stdevdepthgridDatasourceName)       // expected this is a vsis3 object
+	stdevvelocityGridPathString := a.Parameters.GetStringOrFail(stdevvelocitygridDatasourceName) // expected this is a vsis3 object
+	//durationGridPaths := a.Parameters.GetStringOrFail(DurationGridPathsKey)// expected this is a vsis3 object
+	frequencystring := a.Parameters.GetStringOrFail(FrequenciesKey)
+	verticalSlicestring := a.Parameters.GetStringOrFail(verticalSliceName)
+	inventoryPathKey := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
+	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+
+	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
+	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
+	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	// frequencies expected to be comma separated variables of floats.
+	stringFrequencies := strings.Split(frequencystring, ", ")
+	frequencies := make([]float64, 0)
+	for _, s := range stringFrequencies {
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return err
+		}
+		frequencies = append(frequencies, f)
+	}
+	// vertical slices expected to be comma separated variables of floats.
+	stringverticalslice := strings.Split(verticalSlicestring, ", ")
+	verticalslices := make([]float64, 0)
+	for _, s := range stringverticalslice {
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return err
+		}
+		verticalslices = append(verticalslices, f)
+	}
+	// grid paths expected to be comma separated variables of string path parts
+	MeanDepthGridPaths := strings.Split(meandepthGridPathString, ", ")
+	MeanVelocityGridPaths := strings.Split(meanvelocityGridPathString, ", ")
+	StdevDepthGridPaths := strings.Split(stdevdepthGridPathString, ", ")
+	StdevVelocityGridPaths := strings.Split(stdevvelocityGridPathString, ", ")
+	if len(MeanDepthGridPaths) != len(MeanVelocityGridPaths) {
+		return errors.New("depth grids and velocity grids have different numbers of paths")
+	}
+	if len(MeanDepthGridPaths) != len(frequencies) {
+		return errors.New("hazard grids have different numbers of paths than the frequencies list")
+	}
+	hps := make([]lhp.Mean_and_stdev_HazardProvider, 0)
+	for i, dp := range MeanDepthGridPaths {
+		hp, err := lhp.Init(dp, StdevDepthGridPaths[i], MeanVelocityGridPaths[i], StdevVelocityGridPaths[i], verticalslices)
+		if err != nil {
+			return err
+		}
+		hps = append(hps, hp)
+	}
+	// inventory path expected to be a local path
+	// damage function path expected to be a local path
+	sp, err := structureprovider.InitStructureProviderwithOcctypePath(inventoryPathKey, tablename, inventoryDriver, damageFunctionPath)
+	sp.SetDeterministic(true)
+	if err != nil {
+		return err
+	}
+	fmt.Sprintln(sp.FilePath)
+	//results writer
+	outfp := outputFileName //fmt.Sprintf("%s/%s", localData, outputFileName)
+	var rw consequences.ResultsWriter
+	sr := sp.SpatialReference()
+	rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+	if err != nil {
+		return err
+	}
+	defer rw.Close()
+
+	ComputeMultiFrequencyMeanStdev(hps, frequencies, sp, rw)
+	return nil
+}
+func ComputeMultiFrequencyMeanStdev(hps []lhp.Mean_and_stdev_HazardProvider, freqs []float64, sp consequences.StreamProvider, w consequences.ResultsWriter) {
+	fmt.Printf("Computing %v frequencies\n", len(freqs))
+	//ASSUMPTION hazard providers and frequencies are in the same order
+	//ASSUMPTION ordered by most frequent to least frequent event
+	//ASSUMPTION! get bounding box from largest frequency.
+
+	largestHp := hps[len(hps)-1]
+	bbox, err := largestHp.HazardBoundary()
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+	//set up output tables for all frequencies.
+	header := []string{"ORIG_ID", "REPVAL", "STORY", "FOUND_T", "FOUND_H", "x", "y", "OccType", "DamCat", "BASEFIN", "FFH", "DEMFT", "BAAL", "CAAL", "TAAL", "PROB"}
+
+	for _, f := range freqs {
+		header = append(header, fmt.Sprintf("%1.6fMS", f))
+		header = append(header, fmt.Sprintf("%1.6fSS", f))
+		header = append(header, fmt.Sprintf("%1.6fMC", f))
+		header = append(header, fmt.Sprintf("%1.6fSC", f))
+		header = append(header, fmt.Sprintf("%1.6fMH", f))
+		header = append(header, fmt.Sprintf("%1.6fSH", f))
+	}
+
+	sp.ByBbox(bbox, func(f consequences.Receptor) {
+		s, sok := f.(structures.StructureDeterministic)
+		if !sok {
+			return
+		}
+		results := []interface{}{s.Name, s.StructVal, s.NumStories, s.FoundType, s.FoundHt, s.Location().X, s.Location().Y, s.OccType.Name, s.DamCat, "unkown", s.FoundHt + s.GroundElevation, s.GroundElevation, 0.0, 0.0, 0.0, 0.0}
+
+		msEADs := make([]float64, len(freqs))
+		mcEADs := make([]float64, len(freqs))
+		ssEADs := make([]float64, len(freqs))
+		scEADs := make([]float64, len(freqs))
+		//ProvideHazard works off of a geography.Location
+		gotWet := false
+		firstProb := 0.0
+		for index, hp := range hps {
+			d, err := hp.Hazards(geography.Location{X: f.Location().X, Y: f.Location().Y})
+			//compute damages based on hazard being able to provide depth
+			meanSliceDamage := 0.0
+			meanSliceContent := 0.0
+			meanSliceDepth := 0.0
+			meanSliceVelocity := 0.0
+			stdevSliceDamage := 0.0
+			stdevSliceContent := 0.0
+			stdevSliceDepth := 0.0
+			stdevSliceVelocity := 0.0
+			sampleSize := 0
+			for _, hazard := range d {
+				sampleSize++
+				r, err3 := f.Compute(hazard)
+				sliceDepth := hazard.Depth()
+				sliceVelocity := hazard.Velocity()
+				sliceContent := 0.0
+				sliceStructure := 0.0
+				if err3 == nil {
+					if !gotWet {
+						firstProb = freqs[index] //how does this make sense?
+					}
+					gotWet = true
+					sliceStructureI, err := r.Fetch("structure damage")
+					if err != nil {
+						log.Fatal("could not fetch structure damage")
+					}
+					sliceStructure = sliceStructureI.(float64)
+					sliceContentI, err := r.Fetch("content damage")
+					if err != nil {
+						log.Fatal("could not fetch content damage")
+					}
+					sliceContent = sliceContentI.(float64)
+				} else {
+					sliceStructure = 0.0
+					sliceContent = 0.0
+					sliceDepth = 0.0
+					sliceVelocity = 0.0
+				}
+				meanSliceDamage, stdevSliceDamage = meanAndStdev(meanSliceDamage, stdevSliceDamage, sampleSize, sliceStructure)
+				meanSliceContent, stdevSliceContent = meanAndStdev(meanSliceContent, stdevSliceContent, sampleSize, sliceContent)
+				meanSliceDepth, stdevSliceDepth = meanAndStdev(meanSliceDepth, stdevSliceDepth, sampleSize, sliceDepth)
+				meanSliceVelocity, stdevSliceVelocity = meanAndStdev(meanSliceVelocity, stdevSliceVelocity, sampleSize, sliceVelocity)
+
+			}
+
+			msEADs[index] = meanSliceDamage
+			mcEADs[index] = meanSliceContent
+			ssEADs[index] = stdevSliceDamage
+			scEADs[index] = stdevSliceContent
+			meanHazard := hazards.HazardData{
+				Depth:    meanSliceDepth,
+				Velocity: meanSliceVelocity,
+			}
+			stdevHazard := hazards.HazardData{
+				Depth:    stdevSliceDepth,
+				Velocity: stdevSliceVelocity,
+			}
+			results = append(results, msEADs[index])
+			results = append(results, ssEADs[index])
+			results = append(results, mcEADs[index])
+			results = append(results, scEADs[index])
+			b, err := json.Marshal(meanHazard)
+			stdevb, err := json.Marshal(stdevHazard)
+			if err != nil {
+				log.Fatal(err)
+			}
+			shaz := string(b)
+			stdevsshaz := string(stdevb)
+			results = append(results, shaz)
+			results = append(results, stdevsshaz)
+		}
+		results[15] = firstProb
+		sEAD := compute.ComputeSpecialEAD(msEADs, freqs) //use compute special ead to not create triangle below the most frequent event
+		results[12] = sEAD
+		cEAD := compute.ComputeSpecialEAD(mcEADs, freqs) //use compute special ead to not create triangle below the most frequent event
+		results[13] = cEAD
+		results[14] = sEAD + cEAD
+		var ret = consequences.Result{Headers: header, Result: results}
+		if gotWet {
+			w.Write(ret)
+		}
+
+	})
+
+}
+func meanAndStdev(mean float64, stdev float64, sampleSize int, value float64) (float64, float64) {
+	stdev = (((float64(sampleSize-2) / float64(sampleSize-1)) * stdev) + (math.Pow((value-mean), 2))/float64(sampleSize))
+	mean = mean + ((value - mean) / float64(sampleSize))
+	return mean, stdev
+}

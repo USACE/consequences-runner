@@ -34,6 +34,9 @@ func main() {
 		case "compute-frequency":
 			actions.ComputeFrequencyEvent(a)
 			break
+		case "compute-fema-frequency":
+			actions.ComputeFEMAFrequencyEvent(a)
+			break
 		case "copy-inputs":
 			actions.CopyInputs(pl, pm)
 			break

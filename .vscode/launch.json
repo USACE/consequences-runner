@@ -62,7 +62,7 @@
             "program": "${workspaceFolder}/actions",
             "args": [
                 "-test.run",
-                "Test_ComputePayload"
+                "Test_ComputeMultiFrequency"
             ],
             "envFile": "/workspaces/.env"
         }
