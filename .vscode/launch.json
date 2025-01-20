@@ -55,6 +55,17 @@
             ],
             "envFile": "/workspaces/.env"
         },{
+            "name": "Compute Event",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/actions",
+            "args": [
+                "-test.run",
+                "Test_ComputeEvent"
+            ],
+            "envFile": "/workspaces/.env"
+        },{
             "name": "Compute Payload",
             "type": "go",
             "request": "launch",

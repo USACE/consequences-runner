@@ -31,15 +31,17 @@ const (
 	outputLayerName            string = "damages"
 	structureInventoryPathKey  string = "Inventory" //plugin datasource name required
 	//seedsDatasourceName        string = "seeds.json" //plugin datasource name required
-	depthgridDatasourceName string = "depth-grid" //plugin datasource name required
-	outputDatasourceName    string = "Damages"    //plugin output datasource name required
-	localData               string = "/app/data"
-	pluginName              string = "consequences"
-	DepthGridPathsKey       string = "depth-grids"      // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
-	VelocityGridPathsKey    string = "velocity-grids"   // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
-	FrequenciesKey          string = "frequencies"      //expected to be comma separated string
-	inventoryPathKey        string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
-	damageFunctionPathKey   string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+	depthgridDatasourceName    string = "depth-grid"    //plugin datasource name required
+	velocitygridDatasourceName string = "velocity-grid" //plugin datasource name required
+	durationgridDatasourceName string = "duration-grid" //plugin datasource name required
+	outputDatasourceName       string = "Damages"       //plugin output datasource name required
+	localData                  string = "/app/data"
+	pluginName                 string = "consequences"
+	DepthGridPathsKey          string = "depth-grids"      // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
+	VelocityGridPathsKey       string = "velocity-grids"   // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
+	FrequenciesKey             string = "frequencies"      //expected to be comma separated string
+	inventoryPathKey           string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPathKey      string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
 )
 
 func CopyInputs(pl cc.Payload, pm *cc.PluginManager) {
@@ -58,53 +60,100 @@ func PostOutputs(pl cc.Payload, pm *cc.PluginManager) {
 	}
 }
 func ComputeEvent(a cc.Action) error {
+	// get all relevant parameters
 	tablename := a.Parameters.GetStringOrFail(tablenameKey)
-	InventoryPath := a.Parameters.GetStringOrFail(structureInventoryPathKey)
+	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
+	depthGridPathString := a.Parameters.GetStringOrFail(depthgridDatasourceName)       // expected this is a vsis3 object
+	velocityGridPathString := a.Parameters.GetStringOrFail(velocitygridDatasourceName) // expected this is a vsis3 object
+	durationGridPathString, err := a.Parameters.GetString(durationgridDatasourceName)  // expected this is a vsis3 object
+	durationsExist := true
+	//duration is optional
+	if err != nil {
+		durationsExist = false
+	}
+
+	inventoryPath := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
 	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+
 	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
-	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey)
-	depthHazardPath := a.Parameters.GetStringOrFail(depthgridDatasourceName)
+	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
+	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+
+	hpi := hazardproviders.HazardProviderInfo{}
+	if durationsExist {
+		hpi = hazardproviders.HazardProviderInfo{
+			Hazards: []hazardproviders.HazardProviderParameterAndPath{{
+				Hazard:   hazards.Depth,
+				FilePath: depthGridPathString,
+			}, {
+				Hazard:   hazards.Velocity,
+				FilePath: velocityGridPathString,
+			}, {
+				Hazard:   hazards.Duration,
+				FilePath: durationGridPathString,
+			}},
+		}
+	} else {
+		hpi = hazardproviders.HazardProviderInfo{
+			Hazards: []hazardproviders.HazardProviderParameterAndPath{{
+				Hazard:   hazards.Depth,
+				FilePath: depthGridPathString,
+			}, {
+				Hazard:   hazards.Velocity,
+				FilePath: velocityGridPathString,
+			}},
+		}
+
+	}
+	hp, err := hazardproviders.InitMulti(hpi)
 	//get structure inventory (assumed local or path is defined as vsis3)
 	//initalize a structure provider
-	sp, err := structureprovider.InitStructureProvider(InventoryPath, tablename, inventoryDriver)
-
-	if err != nil {
-		log.Fatalf("Terminating the plugin.  Unable to intialize a structure inventory provider : %s\n", err)
-	}
+	// inventory path expected to be a local path
+	// damage function path expected to be a local path
+	sp, err := structureprovider.InitStructureProviderwithOcctypePath(inventoryPath, tablename, inventoryDriver, damageFunctionPath)
 	sp.SetDeterministic(true)
-
-	//initialize a hazard provider
-	var hp hazardproviders.HazardProvider
-	hp, err = hazardproviders.Init_CustomFunction(depthHazardPath, func(valueIn hazards.HazardData, hazard hazards.HazardEvent) (hazards.HazardEvent, error) {
-		if valueIn.Depth == 0 {
-			return hazard, hazardproviders.NoHazardFoundError{}
-		}
-		process := hazardproviders.DepthHazardFunction()
-		return process(valueIn, hazard)
-	})
+	if err != nil {
+		return err
+	}
+	fmt.Sprintln(sp.FilePath)
 
 	//initalize a results writer
 	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
-	projected, ok := hp.(geography.Projected)
+	sr := sp.SpatialReference()
 
 	var rw consequences.ResultsWriter
-	if ok {
-		sr := projected.SpatialReference()
-		rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
-		if err != nil {
-			log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
-		}
-	} else {
-		//could be dangerous
-		log.Printf("hazard provider does not implement geography.projected, results may not be reasonable assumed 4326")
-		rw, err = resultswriters.InitSpatialResultsWriter(outfp, outputLayerName, outputDriver)
-		if err != nil {
-			log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
-		}
+	rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+	if err != nil {
+		log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
 	}
 	defer rw.Close()
 	//compute results
-	compute.StreamAbstract(hp, sp, rw)
+	//get boundingbox
+	fmt.Println("Getting bbox")
+	bbox, err := hp.HazardBoundary()
+	if err != nil {
+		log.Panicf("Unable to get the raster bounding box: %s", err)
+	}
+	fmt.Println(bbox.ToString())
+	sp.ByBbox(bbox, func(f consequences.Receptor) {
+		//ProvideHazard works off of a geography.Location
+		d, err2 := hp.Hazard(geography.Location{X: f.Location().X, Y: f.Location().Y})
+		//compute damages based on hazard being able to provide depth
+		if err2 == nil {
+			r, err3 := f.Compute(d)
+			r.Headers = append(r.Headers, "multihazard")
+			bytes, err := json.Marshal(d)
+			s := ""
+			if err == nil {
+				s = string(bytes)
+			}
+			r.Result = append(r.Result, s)
+			if err3 == nil {
+				rw.Write(r)
+			}
+		}
+	})
 	return nil
 }
 func ComputeFrequencyEvent(a cc.Action) error {

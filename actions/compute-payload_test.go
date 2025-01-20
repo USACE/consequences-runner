@@ -7,21 +7,27 @@ import (
 	"github.com/usace/cc-go-sdk"
 )
 
-func Test_ComputeSingleEvent(t *testing.T) {
+func Test_ComputeEvent(t *testing.T) {
 	a := cc.Action{
 		Name:        "compute-event",
 		Type:        "compute-event",
 		Description: "compute-event",
 		Parameters: map[string]any{
-			"tableName":       "BluestoneLocal",
-			"bucket":          "kanawha-pilot",
-			"Inventory":       "/app/data/BluestoneLocal_unadjusted.gpkg",
-			"inventoryDriver": "GPKG",
-			"outputDriver":    "ESRI Shapefile",
-			"outputFileName":  "/app/data/BluestoneLocal_unadjusted_consequences_2.shp",
+			"tableName":        "Duwamish_NSIv2022_Calibrated",
+			"Inventory":        "/workspaces/consequences-runner/data/duwamish/Duwamish_NSIv2022_Calibrated.gpkg",
+			"inventoryDriver":  "GPKG",
+			"depth-grid":       "/vsis3/ffrd-computable/model-library/ffrd-duwamish/checkpoint-validation/simulations/validation/1/grids/duwamish-20241216/depth.tif",
+			"velocity-grid":    "/vsis3/ffrd-computable/model-library/ffrd-duwamish/checkpoint-validation/simulations/validation/1/grids/duwamish-20241216/velocity.tif",
+			"outputDriver":     "GPKG",
+			"outputFileName":   "/workspaces/consequences-runner/data/duwamish/duwamish_consequences.gpkg",
+			"damage-functions": "/workspaces/consequences-runner/data/Inland_FFRD_damageFunctions.json",
 		},
 	}
-	ComputeEvent(a)
+	err := ComputeEvent(a)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
 }
 
 func Test_ComputeMultiFrequency(t *testing.T) {
@@ -48,22 +54,26 @@ func Test_ComputeMultiFrequency(t *testing.T) {
 	}
 }
 func Test_ComputeFEMAMultiFrequency(t *testing.T) {
+	consequencesName := "Upper New at Claytor_unadjusted.gpkg"
+	hydraulicsName := "UpperNew"
+	outputName := "UpperNew_unadjusted_consequences.shp"
+	root := "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids"
 	a := cc.Action{
 		Name:        "compute-fema-frequency",
 		Type:        "compute-fema-frequency",
 		Description: "compute-fema-frequency",
 		Parameters: map[string]any{
 			"tableName":            "nsi",
-			"Inventory":            "/workspaces/consequences-runner/data/Bluestone Local_unadjusted.gpkg",
+			"Inventory":            fmt.Sprintf("/workspaces/consequences-runner/data/%v/%v", hydraulicsName, consequencesName),
 			"inventoryDriver":      "GPKG",
 			"frequencies":          ".1, .04, .02, .01, .005, .002",
 			"vertical-slice":       ".1, .2, .3, .4, .5, .6, .7, .8, .9",
-			"mean-depth-grids":     "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_depth_500yr.tif",
-			"mean-velocity-grids":  "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_mean_velocity_500yr.tif",
-			"stdev-depth-grids":    "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_depth_500yr.tif",
-			"stdev-velocity-grids": "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_10yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_25yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_50yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_100yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_200yr.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_stdev_velocity_500yr.tif",
+			"mean-depth-grids":     fmt.Sprintf("%v/%v/aep_mean_depth_10yr.tif, %v/%v/aep_mean_depth_25yr.tif, %v/%v/aep_mean_depth_50yr.tif, %v/%v/aep_mean_depth_100yr.tif, %v/%v/aep_mean_depth_200yr.tif, %v/%v/aep_mean_depth_500yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
+			"mean-velocity-grids":  fmt.Sprintf("%v/%v/aep_mean_velocity_10yr.tif, %v/%v/aep_mean_velocity_25yr.tif, %v/%v/aep_mean_velocity_50yr.tif, %v/%v/aep_mean_velocity_100yr.tif, %v/%v/aep_mean_velocity_200yr.tif, %v/%v/aep_mean_velocity_500yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
+			"stdev-depth-grids":    fmt.Sprintf("%v/%v/aep_stdev_depth_10yr.tif, %v/%v/aep_stdev_depth_25yr.tif, %v/%v/aep_stdev_depth_50yr.tif, %v/%v/aep_stdev_depth_100yr.tif, %v/%v/aep_stdev_depth_200yr.tif, %v/%v/aep_stdev_depth_500yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
+			"stdev-velocity-grids": fmt.Sprintf("%v/%v/aep_stdev_velocity_10yr.tif, %v/%v/aep_stdev_velocity_25yr.tif, %v/%v/aep_stdev_velocity_50yr.tif, %v/%v/aep_stdev_velocity_100yr.tif, %v/%v/aep_stdev_velocity_200yr.tif, %v/%v/aep_stdev_velocity_500yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
 			"outputDriver":         "ESRI Shapefile",
-			"outputFileName":       "/workspaces/consequences-runner/data/BluestoneLocal_consequences_6.shp",
+			"outputFileName":       fmt.Sprintf("/workspaces/consequences-runner/data/results/%v/%v", hydraulicsName, outputName),
 			"damage-functions":     "/workspaces/consequences-runner/data/Inland_FFRD_damageFunctions.json",
 		},
 	}
