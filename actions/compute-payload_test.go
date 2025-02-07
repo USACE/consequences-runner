@@ -36,14 +36,14 @@ func Test_ComputeMultiFrequency(t *testing.T) {
 		Type:        "compute-frequency",
 		Description: "compute-frequency",
 		Parameters: map[string]any{
-			"tableName":        "nsi",
-			"Inventory":        "/workspaces/consequences-runner/data/Bluestone Local_unadjusted.gpkg",
+			"tableName":        "Duwamish_NSIv2022_Calibrated",
+			"Inventory":        "/workspaces/consequences-runner/data/duwamish/Duwamish_NSIv2022_Calibrated.gpkg",
 			"inventoryDriver":  "GPKG",
 			"frequencies":      ".1, .04, .02, .01, .005, .002",
-			"depth-grids":      "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_10yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_25yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_50yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_100yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_200yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_depth_500yr_realz_1.tif",
-			"velocity-grids":   "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_10yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_25yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_50yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_100yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_200yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids/BluestoneLocal/aep_velocity_500yr_realz_1.tif",
-			"outputDriver":     "ESRI Shapefile",
-			"outputFileName":   "/workspaces/consequences-runner/data/BluestoneLocal_consequences_6.shp",
+			"depth-grids":      "/vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_10yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_25yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_50yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_100yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_200yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_depth_500yr_realz_1.tif",
+			"velocity-grids":   "/vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_10yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_25yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_50yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_100yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_200yr_realz_1.tif, /vsis3/ffrd-computable/model-library/ffrd-duwamish/scenario-simple-levees/simulations/aep-grids/aep_velocity_500yr_realz_1.tif",
+			"outputDriver":     "GPKG",
+			"outputFileName":   "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/Duwamish_NSIv2022_Calibrated_frequency_based_output_withTriangle.gpkg",
 			"damage-functions": "/workspaces/consequences-runner/data/Inland_FFRD_damageFunctions.json",
 		},
 	}
@@ -57,7 +57,7 @@ func Test_ComputeFEMAMultiFrequency(t *testing.T) {
 	consequencesName := "Upper New at Claytor_unadjusted.gpkg"
 	hydraulicsName := "UpperNew"
 	outputName := "UpperNew_unadjusted_consequences.shp"
-	root := "/vsis3/ffrd-computable/model-library/ffrd-kanawha/sims/uncertainty_10_by_500_no_bootstrap_5_10a_2024/aep-grids"
+	root := "/vsis3/ffrd-computable/model-library/ffrd-duwamish/checkpoint-validation/simulations/validation/aep-grids"
 	a := cc.Action{
 		Name:        "compute-fema-frequency",
 		Type:        "compute-fema-frequency",

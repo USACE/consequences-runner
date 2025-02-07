@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/USACE/go-consequences/compute"
 	"github.com/USACE/go-consequences/consequences"
 	"github.com/USACE/go-consequences/geography"
 	"github.com/USACE/go-consequences/hazardproviders"
@@ -307,9 +306,9 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 			}
 		}
 		results[15] = firstProb
-		sEAD := compute.ComputeSpecialEAD(sEADs, freqs) //use compute special ead to not create triangle below the most frequent event
+		sEAD := ComputeEAD(sEADs, freqs) //use compute special ead to not create triangle below the most frequent event
 		results[12] = sEAD
-		cEAD := compute.ComputeSpecialEAD(cEADs, freqs) //use compute special ead to not create triangle below the most frequent event
+		cEAD := ComputeEAD(cEADs, freqs) //use compute special ead to not create triangle below the most frequent event
 		results[13] = cEAD
 		results[14] = sEAD + cEAD
 		var ret = consequences.Result{Headers: header, Result: results}
@@ -319,4 +318,36 @@ func ComputeMultiFrequency(hps []hazardproviders.HazardProvider, freqs []float64
 
 	})
 
+}
+
+// ComputeEAD integrates under the damage frequency curve but does calculate the first triangle between 1 and the first frequency.
+func ComputeEAD(damages []float64, freq []float64) float64 {
+	//this differs from computeEAD in that it specifically does calculate the first triangle between 1 and the first frequency to interpolate damages to zero.
+	if len(damages) != len(freq) {
+		panic("frequency curve is unbalanced")
+	}
+	triangle := 0.0
+	square := 0.0
+	x1 := freq[0]
+	y1 := damages[0]
+	eadT := 0.0
+	if len(damages) > 1 {
+		for i := 1; i < len(freq); i++ {
+			xdelta := x1 - freq[i]
+			square = xdelta * y1
+			if square != 0.0 { //we dont know where damage really begins until we see it. we can guess it is inbetween ordinates, but who knows.
+				triangle = ((xdelta) * -(y1 - damages[i])) / 2.0
+			} else {
+				triangle = ((xdelta) * -(y1 - damages[i])) / 2.0
+			}
+			eadT += square + triangle
+			x1 = freq[i]
+			y1 = damages[i]
+		}
+	}
+	if x1 != 0.0 {
+		xdelta := x1 - 0.0
+		eadT += xdelta * y1 //no extrapolation, just continue damages out as if it were truth for all remaining probability.
+	}
+	return eadT
 }
