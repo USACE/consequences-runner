@@ -83,3 +83,32 @@ func Test_ComputeFEMAMultiFrequency(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_ComputeFEMAMultiFrequency_SingleParameter(t *testing.T) {
+	consequencesName := "Duwamish_NSIv2022_Calibrated.gpkg"
+	hydraulicsName := "duwamish"
+	outputName := "Duwamish_NSIv2022_consequences_production_single-parameter.shp"
+	root := "/vsis3/ffrd-computable/model-library/ffrd-duwamish/production/simulations/aep-grids"
+	a := cc.Action{
+		Name:        "compute-fema-frequency",
+		Type:        "compute-fema-frequency",
+		Description: "compute-fema-frequency",
+		Parameters: map[string]any{
+			"tableName":         "nsi",
+			"Inventory":         fmt.Sprintf("/workspaces/consequences-runner/data/%v/%v", hydraulicsName, consequencesName),
+			"inventoryDriver":   "GPKG",
+			"frequencies":       ".1, .05, .02, .01, .005, .002, .001, .0005",
+			"vertical-slice":    ".1, .2, .3, .4, .5, .6, .7, .8, .9",
+			"mean-depth-grids":  fmt.Sprintf("%v/%v/aep_mean_depth_10yr.tif, %v/%v/aep_mean_depth_20yr.tif, %v/%v/aep_mean_depth_50yr.tif, %v/%v/aep_mean_depth_100yr.tif, %v/%v/aep_mean_depth_200yr.tif, %v/%v/aep_mean_depth_500yr.tif, %v/%v/aep_mean_depth_1000yr.tif, %v/%v/aep_mean_depth_2000yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
+			"stdev-depth-grids": fmt.Sprintf("%v/%v/aep_stdev_depth_10yr.tif, %v/%v/aep_stdev_depth_20yr.tif, %v/%v/aep_stdev_depth_50yr.tif, %v/%v/aep_stdev_depth_100yr.tif, %v/%v/aep_stdev_depth_200yr.tif, %v/%v/aep_stdev_depth_500yr.tif, %v/%v/aep_stdev_depth_1000yr.tif, %v/%v/aep_stdev_depth_2000yr.tif", root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName, root, hydraulicsName),
+			"outputDriver":      "GPKG",
+			"outputFileName":    fmt.Sprintf("/workspaces/consequences-runner/data/%v/%v", hydraulicsName, outputName),
+			"damage-functions":  "/workspaces/consequences-runner/data/Inland_FFRD_damageFunctions.json",
+		},
+	}
+	err := ComputeFEMAFrequencyEventSingleParameter(a)
+	if err != nil {
+		fmt.Println(err)
+		t.Fail()
+	}
+}
