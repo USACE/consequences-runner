@@ -342,12 +342,8 @@ func ComputeFEMAFrequencyEventSingleParameter(a cc.Action) error {
 		if valueIn.Depth <= 0 {
 			return hazard, gc.NoHazardFoundError{}
 		}
-		if valueIn.Velocity <= 0 {
-			return hazard, gc.NoHazardFoundError{}
-		}
 		h := hazards.HazardData{
-			Depth:    valueIn.Depth,
-			Velocity: valueIn.Velocity,
+			Depth: valueIn.Depth,
 		}
 		e := hazards.HazardDataToMultiParameter(h)
 		return e, nil
