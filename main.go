@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize the plugin manager: %s\n", err.Error())
 	}
-	pl := pm.GetPayload()
+	pl := pm.Payload
 	for _, a := range pl.Actions {
 		switch a.Type {
 		case "compute-event":

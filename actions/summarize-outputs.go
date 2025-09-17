@@ -32,12 +32,12 @@ const (
 
 func SummarizeOutputs(a cc.Action) error {
 	// get all relevant parameters
-	blockFilePath := a.Parameters.GetStringOrFail(blockFilePathKey)
-	realizationNumber := a.Parameters.GetIntOrFail(realizationNumberKey)    //get the realization number
-	resultPathPattern := a.Parameters.GetStringOrFail(resultPathPatternKey) //get the path pattern
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
-	driver := a.Parameters.GetStringOrFail(outputDriverKey) //driver
-	realizationResultFilePath := a.Parameters.GetStringOrFail(realizationResultFilePathKey)
+	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
+	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
+	resultPathPattern := a.Attributes.GetStringOrFail(resultPathPatternKey) //get the path pattern
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
+	driver := a.Attributes.GetStringOrFail(outputDriverKey) //driver
+	realizationResultFilePath := a.Attributes.GetStringOrFail(realizationResultFilePathKey)
 	//get the block file
 	file, err := os.Open(blockFilePath)
 
@@ -201,12 +201,12 @@ type BlockEventValue struct {
 
 func SummarizeOutputsToBlocks(a cc.Action) error {
 	// get all relevant parameters
-	blockFilePath := a.Parameters.GetStringOrFail(blockFilePathKey)
-	realizationNumber := a.Parameters.GetIntOrFail(realizationNumberKey)    //get the realization number
-	resultPathPattern := a.Parameters.GetStringOrFail(resultPathPatternKey) //get the path pattern
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
-	driver := a.Parameters.GetStringOrFail(outputDriverKey) //driver
-	realizationResultFilePath := a.Parameters.GetStringOrFail(realizationResultFilePathKey)
+	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
+	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
+	resultPathPattern := a.Attributes.GetStringOrFail(resultPathPatternKey) //get the path pattern
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
+	driver := a.Attributes.GetStringOrFail(outputDriverKey) //driver
+	realizationResultFilePath := a.Attributes.GetStringOrFail(realizationResultFilePathKey)
 	//get the block file
 	file, err := os.Open(blockFilePath)
 
@@ -359,12 +359,12 @@ func SummarizeOutputsToBlocks(a cc.Action) error {
 }
 func SummarizeOutputsToWatershedFrequency(a cc.Action) error {
 	// get all relevant parameters
-	blockFilePath := a.Parameters.GetStringOrFail(blockFilePathKey)
-	realizationNumber := a.Parameters.GetIntOrFail(realizationNumberKey)    //get the realization number
-	resultPathPattern := a.Parameters.GetStringOrFail(resultPathPatternKey) //get the path pattern
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
-	driver := a.Parameters.GetStringOrFail(outputDriverKey) //driver
-	realizationResultFilePath := a.Parameters.GetStringOrFail(realizationResultFilePathKey)
+	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
+	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
+	resultPathPattern := a.Attributes.GetStringOrFail(resultPathPatternKey) //get the path pattern
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
+	driver := a.Attributes.GetStringOrFail(outputDriverKey) //driver
+	realizationResultFilePath := a.Attributes.GetStringOrFail(realizationResultFilePathKey)
 
 	//get the block file
 	file, err := os.Open(blockFilePath)
@@ -704,16 +704,16 @@ func Download(keys []string, dests []string) {
 }
 func SummarizeOutputsToFrequency(a cc.Action) error {
 	// get all relevant parameters
-	blockFilePath := a.Parameters.GetStringOrFail(blockFilePathKey)
-	realizationNumber := a.Parameters.GetIntOrFail(realizationNumberKey)    //get the realization number
-	resultPathPattern := a.Parameters.GetStringOrFail(resultPathPatternKey) //get the path pattern
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
-	driver := a.Parameters.GetStringOrFail(outputDriverKey) //driver
-	realizationResultFilePath := a.Parameters.GetStringOrFail(realizationResultFilePathKey)
-	outDriver := a.Parameters.GetStringOrFail(spatialOutputDriverKey)
-	outTableName := a.Parameters.GetStringOrFail(outputTableNameKey)
-	realizationSpatialResultFilePath := a.Parameters.GetStringOrFail(realizationSpatialResultsFilePathKey)
-	eadOrdinateCap := a.Parameters.GetIntOrFail(eadOrdinateCapKey)
+	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
+	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
+	resultPathPattern := a.Attributes.GetStringOrFail(resultPathPatternKey) //get the path pattern
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
+	driver := a.Attributes.GetStringOrFail(outputDriverKey) //driver
+	realizationResultFilePath := a.Attributes.GetStringOrFail(realizationResultFilePathKey)
+	outDriver := a.Attributes.GetStringOrFail(spatialOutputDriverKey)
+	outTableName := a.Attributes.GetStringOrFail(outputTableNameKey)
+	realizationSpatialResultFilePath := a.Attributes.GetStringOrFail(realizationSpatialResultsFilePathKey)
+	eadOrdinateCap := a.Attributes.GetIntOrFail(eadOrdinateCapKey)
 	//get the block file
 	file, err := os.Open(blockFilePath)
 

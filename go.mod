@@ -1,26 +1,57 @@
 module github.com/usace/consequences-runner
 
-go 1.19
+go 1.24.0
 
-require github.com/usace/filestore2 v0.0.0-20230817171325-a9673451c7d2
+toolchain go1.24.5
 
 require (
-	github.com/HydrologicEngineeringCenter/go-statistics v0.0.0-20240126145250-a17483ae0981 // indirect
-	github.com/cockroachdb/apd v1.1.0 // indirect
-	github.com/dewberry/gdal v0.3.4 // indirect
-	github.com/leekchan/accounting v1.0.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/spf13/cast v1.5.1 // indirect
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
-	gonum.org/v1/gonum v0.15.0 // indirect
+	github.com/HydrologicEngineeringCenter/go-statistics v0.0.0-20240126145250-a17483ae0981
+	github.com/dewberry/gdal v0.3.4
+	github.com/usace/filestore2 v0.0.0-20230817171325-a9673451c7d2
 )
 
 require (
-	github.com/USACE/go-consequences v0.0.0-20240926232157-366b2a416695
-	github.com/aws/aws-sdk-go v1.44.325 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.39.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.1 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.31.8 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.12 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.7 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.6 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.29.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.34.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.38.4 // indirect
+	github.com/aws/smithy-go v1.23.0 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/invopop/jsonschema v0.13.0 // indirect
+	github.com/leekchan/accounting v1.0.0 // indirect
+	github.com/mailru/easyjson v0.9.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
+	github.com/spf13/cast v1.10.0 // indirect
+	github.com/usace/filesapi v0.0.0-20250320132414-61c781325b9a // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
+	gonum.org/v1/gonum v0.16.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+require (
+	github.com/USACE/go-consequences v0.0.0-20250731200338-7eee6afc377f
+	github.com/aws/aws-sdk-go v1.55.8 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/usace/cc-go-sdk v0.0.0-20231012194732-4956a1c011bd
+	github.com/usace/cc-go-sdk v0.0.0-20250916200307-2e0479aec7c8
 
 )

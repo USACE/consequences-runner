@@ -45,7 +45,10 @@ const (
 
 func CopyInputs(pl cc.Payload, pm *cc.PluginManager) {
 	for _, i := range pl.Inputs {
-		pm.CopyToLocal(i, 0, fmt.Sprintf("%v/%v", localData, i.Name))
+		for pk, _ := range i.Paths {
+			pm.CopyFileToLocal(i.Name, pk, "", fmt.Sprintf("%v/%v", localData, i.Name)) //should be pv.filename or somesuch
+		}
+
 	}
 }
 func PostOutputs(pl cc.Payload, pm *cc.PluginManager) {
@@ -53,31 +56,39 @@ func PostOutputs(pl cc.Payload, pm *cc.PluginManager) {
 	for _, o := range pl.Outputs {
 		for i, dp := range o.Paths {
 			extension = filepath.Ext(dp)
-			pm.CopyToRemote(fmt.Sprintf("%v/%v%v", localData, o.Name, extension), o, i)
+			cfri := cc.CopyFileToRemoteInput{
+				RemoteStoreName: o.StoreName,
+				RemotePath:      dp,
+				LocalPath:       fmt.Sprintf("%v/%v%v", localData, o.Name, extension),
+				RemoteDsName:    o.Name,
+				DsPathKey:       i,
+				DsDataPathKey:   "",
+			}
+			pm.CopyFileToRemote(cfri)
 		}
 
 	}
 }
 func ComputeEvent(a cc.Action) error {
 	// get all relevant parameters
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
-	depthGridPathString := a.Parameters.GetStringOrFail(depthgridDatasourceName)       // expected this is a vsis3 object
-	velocityGridPathString := a.Parameters.GetStringOrFail(velocitygridDatasourceName) // expected this is a vsis3 object
-	durationGridPathString, err := a.Parameters.GetString(durationgridDatasourceName)  // expected this is a vsis3 object
+	depthGridPathString := a.Attributes.GetStringOrFail(depthgridDatasourceName)       // expected this is a vsis3 object
+	velocityGridPathString := a.Attributes.GetStringOrFail(velocitygridDatasourceName) // expected this is a vsis3 object
+	durationGridPathString, err := a.Attributes.GetString(durationgridDatasourceName)  // expected this is a vsis3 object
 	durationsExist := true
 	//duration is optional
 	if err != nil {
 		durationsExist = false
 	}
 
-	inventoryPath := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
-	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+	inventoryPath := a.Attributes.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
+	inventoryDriver := a.Attributes.GetStringOrFail(inventoryDriverKey)
 
-	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
-	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	outputDriver := a.Attributes.GetStringOrFail(outputDriverKey)
+	outputFileName := a.Attributes.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
 	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
-	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPath := a.Attributes.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
 
 	hpi := hazardproviders.HazardProviderInfo{}
 	if durationsExist {
@@ -157,19 +168,19 @@ func ComputeEvent(a cc.Action) error {
 }
 func ComputeFrequencyEvent(a cc.Action) error {
 	// get all relevant parameters
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
-	depthGridPathString := a.Parameters.GetStringOrFail(DepthGridPathsKey)       // expected this is a vsis3 object
-	velocityGridPathString := a.Parameters.GetStringOrFail(VelocityGridPathsKey) // expected this is a vsis3 object
+	depthGridPathString := a.Attributes.GetStringOrFail(DepthGridPathsKey)       // expected this is a vsis3 object
+	velocityGridPathString := a.Attributes.GetStringOrFail(VelocityGridPathsKey) // expected this is a vsis3 object
 	//durationGridPaths := a.Parameters.GetStringOrFail(DurationGridPathsKey)// expected this is a vsis3 object
-	frequencystring := a.Parameters.GetStringOrFail(FrequenciesKey)
-	inventoryPathKey := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
-	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+	frequencystring := a.Attributes.GetStringOrFail(FrequenciesKey)
+	inventoryPathKey := a.Attributes.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
+	inventoryDriver := a.Attributes.GetStringOrFail(inventoryDriverKey)
 
-	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
-	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	outputDriver := a.Attributes.GetStringOrFail(outputDriverKey)
+	outputFileName := a.Attributes.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
 	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
-	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPath := a.Attributes.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
 	// frequencies expected to be comma separated variables of floats.
 	stringFrequencies := strings.Split(frequencystring, ", ")
 	frequencies := make([]float64, 0)

@@ -13,8 +13,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     apt -y install gdal-bin gdal-data libgdal-dev &&\
     apt -y install wget &&\
     apt -y install curl &&\
-    wget https://go.dev/dl/go1.19.5.linux-amd64.tar.gz -P / &&\
-    tar -xvzf /go1.19.5.linux-amd64.tar.gz -C / &&\
+    wget https://go.dev/dl/go1.24.5.linux-amd64.tar.gz -P / &&\
+    tar -xvzf /go1.24.5.linux-amd64.tar.gz -C / &&\
     apt -y install vim &&\
     apt -y install vim-airline vim-ale vim-fugitive &&\
     apt -y install git &&\

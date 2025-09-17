@@ -36,14 +36,15 @@ func Test_SummarizeOutputs(t *testing.T) {
 		Name:        "summarize-output",
 		Type:        "summarize-output",
 		Description: "summarize-output",
-		Parameters: map[string]any{
-			"tableName":                 "damages",
-			"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
-			"realizationNumber":         1,
-			"resultPathPattern":         "/workspaces/consequences-runner/data/scenario-complex-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
-			"outputDriver":              "GPKG",
-			"realizationResultFilePath": "/workspaces/consequences-runner/data/scenario-complex-levees/simulations/summary-outputs/realization_1_consequences.csv",
-		},
+		IOManager: cc.IOManager{
+			Attributes: map[string]any{
+				"tableName":                 "damages",
+				"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
+				"realizationNumber":         1,
+				"resultPathPattern":         "/workspaces/consequences-runner/data/scenario-complex-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
+				"outputDriver":              "GPKG",
+				"realizationResultFilePath": "/workspaces/consequences-runner/data/scenario-complex-levees/simulations/summary-outputs/realization_1_consequences.csv",
+			}},
 	}
 	err := SummarizeOutputs(a)
 	if err != nil {
@@ -56,14 +57,15 @@ func Test_SummarizeOutputsToBlocks(t *testing.T) {
 		Name:        "summarize-output",
 		Type:        "summarize-output",
 		Description: "summarize-output",
-		Parameters: map[string]any{
-			"tableName":                 "damages",
-			"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
-			"realizationNumber":         1,
-			"resultPathPattern":         "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
-			"outputDriver":              "GPKG",
-			"realizationResultFilePath": "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/summary-outputs/realization_1_block_consequences.csv",
-		},
+		IOManager: cc.IOManager{
+			Attributes: map[string]any{
+				"tableName":                 "damages",
+				"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
+				"realizationNumber":         1,
+				"resultPathPattern":         "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
+				"outputDriver":              "GPKG",
+				"realizationResultFilePath": "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/summary-outputs/realization_1_block_consequences.csv",
+			}},
 	}
 	err := SummarizeOutputsToBlocks(a)
 	if err != nil {
@@ -76,18 +78,19 @@ func Test_SummarizeOutputsToFrequency(t *testing.T) {
 		Name:        "summarize-output",
 		Type:        "summarize-output",
 		Description: "summarize-output",
-		Parameters: map[string]any{
-			"tableName":                        "damages",
-			"eadOrdinateCap":                   50, //ordinate for the 10 year
-			"blockFilePath":                    "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
-			"realizationNumber":                1,
-			"resultPathPattern":                "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
-			"outputDriver":                     "GPKG",
-			"spatialOutputDriver":              "GPKG",
-			"outputTableName":                  "summary",
-			"realizationResultFilePath":        "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/realization_1_frequency_consequences.csv",
-			"realizationSpatialResultFilePath": "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/checkpoint-validation_realization_1_event_based_frequency_consequences_values_10year.gpkg",
-		},
+		IOManager: cc.IOManager{
+			Attributes: map[string]any{
+				"tableName":                        "damages",
+				"eadOrdinateCap":                   50, //ordinate for the 10 year
+				"blockFilePath":                    "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
+				"realizationNumber":                1,
+				"resultPathPattern":                "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
+				"outputDriver":                     "GPKG",
+				"spatialOutputDriver":              "GPKG",
+				"outputTableName":                  "summary",
+				"realizationResultFilePath":        "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/realization_1_frequency_consequences.csv",
+				"realizationSpatialResultFilePath": "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/checkpoint-validation_realization_1_event_based_frequency_consequences_values_10year.gpkg",
+			}},
 	}
 	err := SummarizeOutputsToFrequency(a)
 	if err != nil {
@@ -100,16 +103,17 @@ func Test_SummarizeOutputsToWatershedFrequency(t *testing.T) {
 		Name:        "summarize-output",
 		Type:        "summarize-output",
 		Description: "summarize-output",
-		Parameters: map[string]any{
-			"tableName":                 "damages",
-			"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
-			"realizationNumber":         1,
-			"resultPathPattern":         "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
-			"outputDriver":              "GPKG",
-			"spatialOutputDriver":       "GPKG",
-			"outputTableName":           "summary",
-			"realizationResultFilePath": "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/realization_1_SummedAALs_consequences.csv",
-		},
+		IOManager: cc.IOManager{
+			Attributes: map[string]any{
+				"tableName":                 "damages",
+				"blockFilePath":             "/workspaces/consequences-runner/data/checkpoint-validation/simulations/validation/blockfile.json",
+				"realizationNumber":         1,
+				"resultPathPattern":         "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/%v/consequences/duwamish/Duwamish_NSIv2022_Calibrated_consequences.gpkg",
+				"outputDriver":              "GPKG",
+				"spatialOutputDriver":       "GPKG",
+				"outputTableName":           "summary",
+				"realizationResultFilePath": "/workspaces/consequences-runner/data/scenario-simple-levees/simulations/summary-outputs/realization_1_SummedAALs_consequences.csv",
+			}},
 	}
 	err := SummarizeOutputsToWatershedFrequency(a)
 	if err != nil {

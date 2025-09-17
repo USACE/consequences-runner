@@ -46,22 +46,22 @@ const (
 
 func ComputeFEMAFrequencyEvent(a cc.Action) error {
 	// get all relevant parameters
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
-	meandepthGridPathString := a.Parameters.GetStringOrFail(meandepthgridDatasourceName)         // expected this is a vsis3 object
-	meanvelocityGridPathString := a.Parameters.GetStringOrFail(meanvelocitygridDatasourceName)   // expected this is a vsis3 object
-	stdevdepthGridPathString := a.Parameters.GetStringOrFail(stdevdepthgridDatasourceName)       // expected this is a vsis3 object
-	stdevvelocityGridPathString := a.Parameters.GetStringOrFail(stdevvelocitygridDatasourceName) // expected this is a vsis3 object
+	meandepthGridPathString := a.Attributes.GetStringOrFail(meandepthgridDatasourceName)         // expected this is a vsis3 object
+	meanvelocityGridPathString := a.Attributes.GetStringOrFail(meanvelocitygridDatasourceName)   // expected this is a vsis3 object
+	stdevdepthGridPathString := a.Attributes.GetStringOrFail(stdevdepthgridDatasourceName)       // expected this is a vsis3 object
+	stdevvelocityGridPathString := a.Attributes.GetStringOrFail(stdevvelocitygridDatasourceName) // expected this is a vsis3 object
 	//durationGridPaths := a.Parameters.GetStringOrFail(DurationGridPathsKey)// expected this is a vsis3 object
-	frequencystring := a.Parameters.GetStringOrFail(FrequenciesKey)
-	verticalSlicestring := a.Parameters.GetStringOrFail(verticalSliceName)
-	inventoryPathKey := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
-	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+	frequencystring := a.Attributes.GetStringOrFail(FrequenciesKey)
+	verticalSlicestring := a.Attributes.GetStringOrFail(verticalSliceName)
+	inventoryPathKey := a.Attributes.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
+	inventoryDriver := a.Attributes.GetStringOrFail(inventoryDriverKey)
 
-	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
-	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	outputDriver := a.Attributes.GetStringOrFail(outputDriverKey)
+	outputFileName := a.Attributes.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
 	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
-	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPath := a.Attributes.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
 	// frequencies expected to be comma separated variables of floats.
 	stringFrequencies := strings.Split(frequencystring, ", ")
 	frequencies := make([]float64, 0)
@@ -290,22 +290,22 @@ func meanAndStdev(mean float64, stdev float64, sampleSize int, value float64) (f
 
 func ComputeFEMAFrequencyEventSingleParameter(a cc.Action) error {
 	// get all relevant parameters
-	tablename := a.Parameters.GetStringOrFail(tablenameKey)
+	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
-	meandepthGridPathString := a.Parameters.GetStringOrFail(meandepthgridDatasourceName) // expected this is a vsis3 object
+	meandepthGridPathString := a.Attributes.GetStringOrFail(meandepthgridDatasourceName) // expected this is a vsis3 object
 	//meanvelocityGridPathString := a.Parameters.GetStringOrFail(meanvelocitygridDatasourceName)   // expected this is a vsis3 object
-	stdevdepthGridPathString := a.Parameters.GetStringOrFail(stdevdepthgridDatasourceName) // expected this is a vsis3 object
+	stdevdepthGridPathString := a.Attributes.GetStringOrFail(stdevdepthgridDatasourceName) // expected this is a vsis3 object
 	//stdevvelocityGridPathString := a.Parameters.GetStringOrFail(stdevvelocitygridDatasourceName) // expected this is a vsis3 object
 	//durationGridPaths := a.Parameters.GetStringOrFail(DurationGridPathsKey)// expected this is a vsis3 object
-	frequencystring := a.Parameters.GetStringOrFail(FrequenciesKey)
-	verticalSlicestring := a.Parameters.GetStringOrFail(verticalSliceName)
-	inventoryPathKey := a.Parameters.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
-	inventoryDriver := a.Parameters.GetStringOrFail(inventoryDriverKey)
+	frequencystring := a.Attributes.GetStringOrFail(FrequenciesKey)
+	verticalSlicestring := a.Attributes.GetStringOrFail(verticalSliceName)
+	inventoryPathKey := a.Attributes.GetStringOrFail(inventoryPathKey) //expected this is local - needs to agree with the payload input datasource name
+	inventoryDriver := a.Attributes.GetStringOrFail(inventoryDriverKey)
 
-	outputDriver := a.Parameters.GetStringOrFail(outputDriverKey)
-	outputFileName := a.Parameters.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
+	outputDriver := a.Attributes.GetStringOrFail(outputDriverKey)
+	outputFileName := a.Attributes.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
 	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
-	damageFunctionPath := a.Parameters.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPath := a.Attributes.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
 	// frequencies expected to be comma separated variables of floats.
 	stringFrequencies := strings.Split(frequencystring, ", ")
 	frequencies := make([]float64, 0)
