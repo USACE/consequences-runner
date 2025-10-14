@@ -129,7 +129,24 @@ func ComputeEvent(a cc.Action) error {
 	fmt.Sprintln(sp.FilePath)
 
 	//initalize a results writer
-	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
+	var outfp string
+	if outputDriver == "PostgreSQL" {
+		// Construct a GDAL/PostGIS connection string
+		// You could get these values from attributes or environment variables.
+		pgUser := a.Attributes.GetStringOrDefault("pg-user", "postgres")
+		pgPass := a.Attributes.GetStringOrDefault("pg-password", "")
+		pgDB := a.Attributes.GetStringOrDefault("pg-dbname", "mydb")
+		pgHost := a.Attributes.GetStringOrDefault("pg-host", "localhost")
+		pgPort := a.Attributes.GetStringOrDefault("pg-port", "5432")
+
+		outfp = fmt.Sprintf(
+			"PG:dbname=%s user=%s password=%s host=%s port=%s",
+			pgDB, pgUser, pgPass, pgHost, pgPort,
+		)
+	} else {
+		// Default file-based output (existing behavior)
+		outfp = fmt.Sprintf("%s/%s", localData, outputFileName)
+	}
 	sr := sp.SpatialReference()
 
 	var rw consequences.ResultsWriter
