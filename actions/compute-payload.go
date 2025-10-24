@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,10 +14,11 @@ import (
 	"github.com/USACE/go-consequences/geography"
 	"github.com/USACE/go-consequences/hazardproviders"
 	"github.com/USACE/go-consequences/hazards"
-	"github.com/USACE/go-consequences/resultswriters"
+	gcrw "github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/USACE/go-consequences/structures"
 	"github.com/usace/cc-go-sdk"
+	lrw "github.com/usace/consequences-runner/resultswriters"
 )
 
 const (
@@ -41,6 +43,12 @@ const (
 	FrequenciesKey             string = "frequencies"      //expected to be comma separated string
 	inventoryPathKey           string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
 	damageFunctionPathKey      string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+	pgUserKey                         = "PG_USER"
+	pgPasswordKey                     = "PG_PASSWORD"
+	pgDbnameKey                       = "PG_DBNAME"
+	pgHostKey                         = "PG_HOST"
+	pgPortKey                         = "PG_PORT"
+	pgSchemaKey                       = "PG_SCHEMA"
 )
 
 func CopyInputs(pl cc.Payload, pm *cc.PluginManager) {
@@ -129,15 +137,35 @@ func ComputeEvent(a cc.Action) error {
 	fmt.Sprintln(sp.FilePath)
 
 	//initalize a results writer
-	outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
-	sr := sp.SpatialReference()
-
 	var rw consequences.ResultsWriter
-	rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
-	if err != nil {
-		log.Fatalf("Failed to initilize spatial result writer: %s\n", err)
+	if outputDriver == "PostgreSQL" {
+		pgUser := os.Getenv(pgUserKey)
+		pgPass := os.Getenv(pgPasswordKey)
+		pgDB := os.Getenv(pgDbnameKey)
+		pgHost := os.Getenv(pgHostKey)
+		pgPort := os.Getenv(pgPortKey)
+		pgSchema := os.Getenv(pgSchemaKey)
+
+		outConnStr := fmt.Sprintf(
+			"PG:dbname=%s user=%s password=%s host=%s port=%s schemas=%s",
+			pgDB, pgUser, pgPass, pgHost, pgPort, pgSchema,
+		)
+
+		rw, err = lrw.InitSpatialResultsWriter_PSQL(outConnStr, outputLayerName, outputDriver, pgDB)
+		if err != nil {
+			log.Fatalf("Failed to initialize spatial psql result writer: %s\n", err)
+		}
+	} else {
+		outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
+		sr := sp.SpatialReference()
+
+		rw, err = gcrw.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+		if err != nil {
+			log.Fatalf("Failed to initialize spatial result writer: %s\n", err)
+		}
 	}
 	defer rw.Close()
+
 	//compute results
 	//get boundingbox
 	fmt.Println("Getting bbox")
@@ -229,7 +257,7 @@ func ComputeFrequencyEvent(a cc.Action) error {
 	outfp := outputFileName //fmt.Sprintf("%s/%s", localData, outputFileName)
 	var rw consequences.ResultsWriter
 	sr := sp.SpatialReference()
-	rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+	rw, err = gcrw.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
 	if err != nil {
 		return err
 	}
