@@ -43,12 +43,12 @@ const (
 	FrequenciesKey             string = "frequencies"      //expected to be comma separated string
 	inventoryPathKey           string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
 	damageFunctionPathKey      string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
-	pgUserKey                  string = "pg-user"
-	pgPasswordKey              string = "pg-password"
-	pgDbnameKey                string = "pg-dbname"
-	pgHostKey                  string = "pg-host"
-	pgPortKey                  string = "pg-port"
-	pgSchemaKey                string = "pg-schema"
+	pgUserKey                         = "PG_USER"
+	pgPasswordKey                     = "PG_PASSWORD"
+	pgDbnameKey                       = "PG_DBNAME"
+	pgHostKey                         = "PG_HOST"
+	pgPortKey                         = "PG_PORT"
+	pgSchemaKey                       = "PG_SCHEMA"
 )
 
 func CopyInputs(pl cc.Payload, pm *cc.PluginManager) {
