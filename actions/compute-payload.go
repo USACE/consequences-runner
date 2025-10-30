@@ -43,6 +43,8 @@ const (
 	FrequenciesKey             string = "frequencies"      //expected to be comma separated string
 	inventoryPathKey           string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
 	damageFunctionPathKey      string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+	projectIdKey               string = "project-id"
+	runIdKey                   string = "run-id"
 	pgUserKey                         = "PG_USER"
 	pgPasswordKey                     = "PG_PASSWORD"
 	pgDbnameKey                       = "PG_DBNAME"
@@ -97,6 +99,8 @@ func ComputeEvent(a cc.Action) error {
 	outputFileName := a.Attributes.GetStringOrFail(outputFileNameKey) //expected this is local - needs to agree with the payload output datasource name
 	//useKnowledgeUncertainty, err := strconv.ParseBool(a.Parameters.GetStringOrFail(useKnowledgeUncertaintyKey))
 	damageFunctionPath := a.Attributes.GetStringOrFail(damageFunctionPathKey) //expected this is local - needs to agree with the payload input datasource name
+	projectId := a.Attributes.GetStringOrFail(projectIdKey)
+	runId := a.Attributes.GetStringOrFail(runIdKey)
 
 	hpi := hazardproviders.HazardProviderInfo{}
 	if durationsExist {
@@ -180,6 +184,7 @@ func ComputeEvent(a cc.Action) error {
 		//compute damages based on hazard being able to provide depth
 		if err2 == nil {
 			r, err3 := f.Compute(d)
+
 			r.Headers = append(r.Headers, "multihazard")
 			bytes, err := json.Marshal(d)
 			s := ""
@@ -187,6 +192,12 @@ func ComputeEvent(a cc.Action) error {
 				s = string(bytes)
 			}
 			r.Result = append(r.Result, s)
+
+			r.Headers = append(r.Headers, "project_id")
+			r.Result = append(r.Result, projectId)
+			r.Headers = append(r.Headers, "run_id")
+			r.Result = append(r.Result, runId)
+
 			if err3 == nil {
 				rw.Write(r)
 			}
