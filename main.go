@@ -31,6 +31,9 @@ func main() {
 		case "compute-event":
 			actions.ComputeEvent(a)
 			break
+		case "compute-event-chart":
+			actions.ComputeEventChart(a)
+			break
 		case "compute-frequency":
 			actions.ComputeFrequencyEvent(a)
 			break

@@ -13,7 +13,7 @@ import (
 
 // results writer for spatial data to psql database
 type psqlResultsWriter struct {
-	FilePath           string
+	ConnectionStr      string
 	LayerName          string
 	Layer              *gdal.Layer
 	ds                 *gdal.DataSource
@@ -143,10 +143,10 @@ func InitSpatialResultsWriter_PSQL(connStr string, layerName string, driver stri
 	newLayer := dsOut.LayerByName(layerName)
 
 	return &psqlResultsWriter{
-		FilePath:  connStr,
-		LayerName: layerName,
-		ds:        &dsOut,
-		Layer:     &newLayer,
-		index:     0,
+		ConnectionStr: connStr,
+		LayerName:     layerName,
+		ds:            &dsOut,
+		Layer:         &newLayer,
+		index:         0,
 	}, nil
 }
