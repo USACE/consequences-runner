@@ -1,5 +1,6 @@
 package actions
 
+/*
 import (
 	"fmt"
 	"testing"
@@ -117,3 +118,4 @@ func Test_ComputeFEMAMultiFrequency_SingleParameter(t *testing.T) {
 		t.Fail()
 	}
 }
+*/

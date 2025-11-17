@@ -17,34 +17,34 @@ import (
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/USACE/go-consequences/structures"
-	"github.com/usace/cc-go-sdk"
+	"github.com/usace-cloud-compute/cc-go-sdk"
 	lhp "github.com/usace/consequences-runner/hazardproviders"
 )
 
 const (
-	//tablenameKey string = "tableName" //plugin attribute key required
-	//studyAreaKey               string = "studyArea"            // plugin attribute key required - describes what seedset to use.
-	//bucketKey                  string = "bucket"               //plugin attribute key required - bucket only. i.e. mmc-storage-6 - will be combined with datastore root parameter
-	//inventoryDriverKey         string = "inventoryDriver"      //plugin attribute key required preferably "PARQUET", could be "GPKG"
-	//outputDriverKey            string = "outputDriver"         //plugin attribute key required preferably "PARQUET", could be "GPKG"
-	//outputFileNameKey          string = "outputFileName"       //plugin attribute key required should include extension compatable with driver name.
-	//useKnowledgeUncertaintyKey string = "knowledgeUncertainty" //plugin attribute key required -
-	//outputLayerName            string = "damages"
-	//seedsDatasourceName        string = "seeds.json" //plugin datasource name required
-	meandepthgridDatasourceName     string = "mean-depth-grids"     //plugin datasource name required
-	stdevdepthgridDatasourceName    string = "stdev-depth-grids"    //plugin datasource name required
-	meanvelocitygridDatasourceName  string = "mean-velocity-grids"  //plugin datasource name required
-	stdevvelocitygridDatasourceName string = "stdev-velocity-grids" //plugin datasource name required
-	verticalSliceName               string = "vertical-slice"
-	//outputDatasourceName    string = "Damages"    //plugin output datasource name required
-	//localData               string = "/app/data"
-	//pluginName              string = "consequences"
-	//FrequenciesKey          string = "frequencies"      //expected to be comma separated string
-	//inventoryPathKey        string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
-	//damageFunctionPathKey   string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+	meandepthgridDatasourceName                 string = "mean-depth-grids"     //plugin datasource name required
+	stdevdepthgridDatasourceName                string = "stdev-depth-grids"    //plugin datasource name required
+	meanvelocitygridDatasourceName              string = "mean-velocity-grids"  //plugin datasource name required
+	stdevvelocitygridDatasourceName             string = "stdev-velocity-grids" //plugin datasource name required
+	verticalSliceName                           string = "vertical-slice"
+	femaMultiParameterFrequencyBasedActionName  string = "compute-fema-frequency"
+	femaSingleParameterFrequencyBasedActionName string = "compute-fema-frequency-single-parameter"
 )
 
-func ComputeFEMAFrequencyEvent(a cc.Action) error {
+func init() {
+	cc.ActionRegistry.RegisterAction(femaMultiParameterFrequencyBasedActionName, &FemaMultiParameterFrequencyBasedAction{})
+	cc.ActionRegistry.RegisterAction(femaSingleParameterFrequencyBasedActionName, &FemaSingleParameterFrequencyBasedAction{})
+}
+
+type FemaMultiParameterFrequencyBasedAction struct {
+	cc.ActionRunnerBase
+}
+type FemaSingleParameterFrequencyBasedAction struct {
+	cc.ActionRunnerBase
+}
+
+func (ar *FemaMultiParameterFrequencyBasedAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
@@ -288,7 +288,8 @@ func meanAndStdev(mean float64, stdev float64, sampleSize int, value float64) (f
 	return mean, stdev
 }
 
-func ComputeFEMAFrequencyEventSingleParameter(a cc.Action) error {
+func (ar *FemaSingleParameterFrequencyBasedAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)

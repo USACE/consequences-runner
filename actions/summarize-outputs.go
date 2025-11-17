@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,21 +14,45 @@ import (
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/dewberry/gdal"
 	"github.com/usace/cc-go-sdk"
-	filestore "github.com/usace/filestore2"
 )
 
 const (
-	blockFilePathKey                     string = "blockFilePath"
-	realizationNumberKey                 string = "realizationNumber"
-	resultPathPatternKey                 string = "resultPathPattern"
-	realizationResultFilePathKey         string = "realizationResultFilePath"
-	outputTableNameKey                   string = "outputTableName"
-	spatialOutputDriverKey               string = "spatialOutputDriver"
-	realizationSpatialResultsFilePathKey string = "realizationSpatialResultFilePath"
-	eadOrdinateCapKey                    string = "eadOrdinateCap"
+	blockFilePathKey                               string = "blockFilePath"
+	realizationNumberKey                           string = "realizationNumber"
+	resultPathPatternKey                           string = "resultPathPattern"
+	realizationResultFilePathKey                   string = "realizationResultFilePath"
+	outputTableNameKey                             string = "outputTableName"
+	spatialOutputDriverKey                         string = "spatialOutputDriver"
+	realizationSpatialResultsFilePathKey           string = "realizationSpatialResultFilePath"
+	eadOrdinateCapKey                              string = "eadOrdinateCap"
+	summarizeOutputsActionName                     string = "summarize-outputs"
+	summarizeOutputsToBlocksActionName             string = "summarize-outputs-to-blocks"
+	summarizeOutputsToFrequencyActionName          string = "summarize-outputs-to-frequency"
+	summarizeOutputsToWatershedFrequencyActionName string = "summarize-outputs-to-watershed-frequency"
 )
 
-func SummarizeOutputs(a cc.Action) error {
+func init() {
+	cc.ActionRegistry.RegisterAction(summarizeOutputsActionName, &ComputeEventAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToBlocksActionName, &ComputeFrequencyAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToFrequencyActionName, &ComputeCoastalEventAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToWatershedFrequencyActionName, &ComputeCoastalEventAction{})
+}
+
+type SummarizeOutputsAction struct {
+	cc.ActionRunnerBase
+}
+type SummarizeOutputsToBlocksAction struct {
+	cc.ActionRunnerBase
+}
+type SummarizeOutputsToFrequencyAction struct {
+	cc.ActionRunnerBase
+}
+type SummarizeOutputsToWatershedFrequencyAction struct {
+	cc.ActionRunnerBase
+}
+
+func (ar *SummarizeOutputsAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
 	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
@@ -199,7 +221,8 @@ type BlockEventValue struct {
 	Value       float64
 }
 
-func SummarizeOutputsToBlocks(a cc.Action) error {
+func (ar *SummarizeOutputsToBlocksAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
 	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
@@ -357,7 +380,8 @@ func SummarizeOutputsToBlocks(a cc.Action) error {
 	resultwriter.WriteString(sb.String())
 	return nil
 }
-func SummarizeOutputsToWatershedFrequency(a cc.Action) error {
+func (ar *SummarizeOutputsToWatershedFrequencyAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
 	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number
@@ -648,61 +672,8 @@ func parseMultiHazardString(input string, parameter string) (float64, error) {
 		return -1.0, errors.New("could not find parameter " + parameter)
 	}
 }
-func Download(keys []string, dests []string) {
-	//create a filestore connection to the runs directory
-	config := filestore.S3FSConfig{
-		S3Id:     os.Getenv(cc.AwsAccessKeyId),
-		S3Key:    os.Getenv(cc.AwsSecretAccessKey),
-		S3Region: os.Getenv(cc.AwsDefaultRegion),
-		S3Bucket: os.Getenv(cc.AwsS3Bucket),
-	}
-	fs, err := filestore.NewFileStore(config)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	for i, f := range keys {
-		ro := filestore.PathConfig{
-			Path: f,
-			//Paths: []string{f},
-		}
-
-		reader, err := fs.GetObject(ro)
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println(f)
-			//return
-		} else {
-			defer reader.Close()
-			dir := filepath.Dir(dests[i])
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				// Create the directory with permissions 0755 (rwxr-xr-x)
-
-				err := os.MkdirAll(dir, 0755)
-				if err != nil {
-					panic(err) // Handle the error appropriately
-				}
-				println("Directory created successfully!")
-			} else {
-				println("Directory already exists!")
-			}
-			resultwriter, err := os.Create(dests[i])
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			filebytes, err := io.ReadAll(reader)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			resultwriter.Write(filebytes)
-		}
-
-	}
-
-}
-func SummarizeOutputsToFrequency(a cc.Action) error {
+func (ar *SummarizeOutputsToFrequencyAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	blockFilePath := a.Attributes.GetStringOrFail(blockFilePathKey)
 	realizationNumber := a.Attributes.GetIntOrFail(realizationNumberKey)    //get the realization number

@@ -7,7 +7,6 @@ toolchain go1.24.5
 require (
 	github.com/HydrologicEngineeringCenter/go-statistics v0.0.0-20240126145250-a17483ae0981
 	github.com/dewberry/gdal v0.3.4
-	github.com/usace/filestore2 v0.0.0-20230817171325-a9673451c7d2
 )
 
 require (
@@ -40,18 +39,17 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
+	github.com/usace-cloud-compute/filesapi v0.0.0-20251107191432-8084e0da4b5c // indirect
 	github.com/usace/filesapi v0.0.0-20250320132414-61c781325b9a // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
-	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/USACE/go-consequences v0.0.0-20250731200338-7eee6afc377f
-	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/usace-cloud-compute/cc-go-sdk v0.0.0-20251110180756-cac3686e146b
 	github.com/usace/cc-go-sdk v0.0.0-20250916200307-2e0479aec7c8
 
 )

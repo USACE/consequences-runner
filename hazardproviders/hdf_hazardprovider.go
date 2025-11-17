@@ -1,4 +1,4 @@
-package main
+package hazardproviders
 
 /*import(
 	"github.com/usace/go-raslib/geom"

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -32,54 +31,48 @@ const (
 	outputLayerName            string = "damages"
 	structureInventoryPathKey  string = "Inventory" //plugin datasource name required
 	//seedsDatasourceName        string = "seeds.json" //plugin datasource name required
-	depthgridDatasourceName    string = "depth-grid"    //plugin datasource name required
-	velocitygridDatasourceName string = "velocity-grid" //plugin datasource name required
-	durationgridDatasourceName string = "duration-grid" //plugin datasource name required
-	outputDatasourceName       string = "Damages"       //plugin output datasource name required
-	localData                  string = "/app/data"
-	pluginName                 string = "consequences"
-	DepthGridPathsKey          string = "depth-grids"      // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
-	VelocityGridPathsKey       string = "velocity-grids"   // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
-	FrequenciesKey             string = "frequencies"      //expected to be comma separated string
-	inventoryPathKey           string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
-	damageFunctionPathKey      string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
-	projectIdKey               string = "project-id"
-	runIdKey                   string = "run-id"
-	pgUserKey                         = "PG_USER"
-	pgPasswordKey                     = "PG_PASSWORD"
-	pgDbnameKey                       = "PG_DBNAME"
-	pgHostKey                         = "PG_HOST"
-	pgPortKey                         = "PG_PORT"
-	pgSchemaKey                       = "PG_SCHEMA"
+	depthgridDatasourceName       string = "depth-grid"    //plugin datasource name required
+	velocitygridDatasourceName    string = "velocity-grid" //plugin datasource name required
+	durationgridDatasourceName    string = "duration-grid" //plugin datasource name required
+	outputDatasourceName          string = "Damages"       //plugin output datasource name required
+	localData                     string = "/app/data"
+	pluginName                    string = "consequences"
+	DepthGridPathsKey             string = "depth-grids"      // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
+	VelocityGridPathsKey          string = "velocity-grids"   // expected to contain the fully qualified vsis3 path set comma separated or the local path if the resource is included as an inputdatasource
+	FrequenciesKey                string = "frequencies"      //expected to be comma separated string
+	inventoryPathKey              string = "Inventory"        //expected this is local - needs to agree with the payload input datasource name
+	damageFunctionPathKey         string = "damage-functions" //expected this is local - needs to agree with the payload input datasource name
+	projectIdKey                  string = "project-id"
+	runIdKey                      string = "run-id"
+	pgUserKey                     string = "PG_USER"
+	pgPasswordKey                 string = "PG_PASSWORD"
+	pgDbnameKey                   string = "PG_DBNAME"
+	pgHostKey                     string = "PG_HOST"
+	pgPortKey                     string = "PG_PORT"
+	pgSchemaKey                   string = "PG_SCHEMA"
+	computeEventActionName        string = "compute-event"
+	computeFrequencyActionName    string = "compute-frequency"
+	computeCoastalEventActionName string = "compute-coastal-event"
 )
 
-func CopyInputs(pl cc.Payload, pm *cc.PluginManager) {
-	for _, i := range pl.Inputs {
-		for pk, _ := range i.Paths {
-			pm.CopyFileToLocal(i.Name, pk, "", fmt.Sprintf("%v/%v", localData, i.Name)) //should be pv.filename or somesuch
-		}
-
-	}
+func init() {
+	cc.ActionRegistry.RegisterAction(computeEventActionName, &ComputeEventAction{})
+	cc.ActionRegistry.RegisterAction(computeFrequencyActionName, &ComputeFrequencyAction{})
+	cc.ActionRegistry.RegisterAction(computeCoastalEventActionName, &ComputeCoastalEventAction{})
 }
-func PostOutputs(pl cc.Payload, pm *cc.PluginManager) {
-	extension := ""
-	for _, o := range pl.Outputs {
-		for i, dp := range o.Paths {
-			extension = filepath.Ext(dp)
-			cfri := cc.CopyFileToRemoteInput{
-				RemoteStoreName: o.StoreName,
-				RemotePath:      dp,
-				LocalPath:       fmt.Sprintf("%v/%v%v", localData, o.Name, extension),
-				RemoteDsName:    o.Name,
-				DsPathKey:       i,
-				DsDataPathKey:   "",
-			}
-			pm.CopyFileToRemote(cfri)
-		}
 
-	}
+type ComputeEventAction struct {
+	cc.ActionRunnerBase
 }
-func ComputeEvent(a cc.Action) error {
+type ComputeFrequencyAction struct {
+	cc.ActionRunnerBase
+}
+type ComputeCoastalEventAction struct {
+	cc.ActionRunnerBase
+}
+
+func (ar *ComputeEventAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)
@@ -196,7 +189,9 @@ func ComputeEvent(a cc.Action) error {
 	})
 	return nil
 }
-func ComputeEventChart(a cc.Action) error {
+
+func (ar *ComputeCoastalEventAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters for the Chart team
 	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	depthGridPathString := a.Attributes.GetStringOrFail(depthgridDatasourceName)       // expected this is a vsis3 object
@@ -283,7 +278,8 @@ func ComputeEventChart(a cc.Action) error {
 	})
 	return nil
 }
-func ComputeFrequencyEvent(a cc.Action) error {
+func (ar *ComputeFrequencyAction) Run() error {
+	a := ar.Action
 	// get all relevant parameters
 	tablename := a.Attributes.GetStringOrFail(tablenameKey)
 	//vsis3prefix := a.Parameters.GetStringOrFail(vsis3prefixKey)

@@ -1,19 +1,47 @@
-FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3
+FROM ghcr.io/usace-cloud-compute/cc-tiledb-base:latest as dev
 
-ENV TZ=America/New_York
+ARG TILEDB_LIB=/usr/local/lib/tiledb
+ARG GO_VERSION=1.23.9
+ARG TARGETARCH
+
 ENV PATH=/go/bin:$PATH
+ENV CGO_LDFLAGS="-L${TILEDB_LIB}/lib"
+ENV CGO_CFLAGS="-I${TILEDB_LIB}/include"
 ENV GOROOT=/go
 ENV GOPATH=/src/go
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &&\
-    mkdir /go &&\
-    mkdir -p /src/go &&\
-    apt update &&\
-    apt -y install build-essential &&\
-	apt -y install pkg-config &&\
-    apt -y install gdal-bin gdal-data libgdal-dev &&\
-    apt -y install wget &&\
-    wget https://golang.org/dl/go1.19.13.linux-amd64.tar.gz -P / &&\
-    tar -xvzf /go1.19.13.linux-amd64.tar.gz -C / &&\
-    apt -y install vim &&\
-    apt -y install git
+RUN echo "Building for arch: ${TARGETARCH}" &&\
+    wget https://golang.org/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -P / &&\
+    tar -xvzf /go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -C /
+
+#------------
+
+FROM dev as builder
+
+RUN apt update &&\
+	  apt -y install gdal-bin gdal-data libgdal-dev
+
+COPY . /src
+
+WORKDIR /src
+
+#RUN go build
+RUN make build
+
+#-------------
+
+FROM ubuntu:24.04 AS prod
+
+ARG TILEDB_LIB=/usr/local/lib/tiledb
+
+ENV PATH=/root/.local/bin:$PATH
+ENV LD_LIBRARY_PATH="${TILEDB_LIB}/lib"
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+ENV LIBRARY_PATH="${TILEDB_LIB}/lib"
+
+RUN apt update &&\
+    apt -y install libssl-dev libbz2-dev libgdbm-dev uuid-dev libncurses-dev libffi-dev libgdbm-compat-dev sqlite3 lzma lzma-dev &&\
+    apt -y install gdal-bin gdal-data libgdal-dev
+
+COPY --from=builder /usr/local/lib/tiledb /usr/local/lib/tiledb
+COPY --from=builder /src/consequences-runner /app/consequences-runner

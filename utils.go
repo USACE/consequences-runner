@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"io"
@@ -15,6 +16,62 @@ import (
 	"github.com/usace/cc-go-sdk"
 	filestore "github.com/usace/filestore2"
 )
+
+
+	func Download(keys []string, dests []string) {
+		//create a filestore connection to the runs directory
+		config := filestore.S3FSConfig{
+			S3Id:     os.Getenv(cc.AwsAccessKeyId),
+			S3Key:    os.Getenv(cc.AwsSecretAccessKey),
+			S3Region: os.Getenv(cc.AwsDefaultRegion),
+			S3Bucket: os.Getenv(cc.AwsS3Bucket),
+		}
+		fs, err := filestore.NewFileStore(config)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		for i, f := range keys {
+			ro := filestore.PathConfig{
+				Path: f,
+				//Paths: []string{f},
+			}
+
+			reader, err := fs.GetObject(ro)
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println(f)
+				//return
+			} else {
+				defer reader.Close()
+				dir := filepath.Dir(dests[i])
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
+					// Create the directory with permissions 0755 (rwxr-xr-x)
+
+					err := os.MkdirAll(dir, 0755)
+					if err != nil {
+						panic(err) // Handle the error appropriately
+					}
+					println("Directory created successfully!")
+				} else {
+					println("Directory already exists!")
+				}
+				resultwriter, err := os.Create(dests[i])
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				filebytes, err := io.ReadAll(reader)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				resultwriter.Write(filebytes)
+			}
+
+		}
+
+}
 
 func ConvertGpkgToParquet(geopackageName string) {
 	//create a filestore connection to the runs directory
@@ -131,3 +188,4 @@ func ConvertGpkgToParquet(geopackageName string) {
 	}
 	fs.PutObject(parquetpathconfig, parquetbytes)
 }
+*/

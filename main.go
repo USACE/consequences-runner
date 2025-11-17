@@ -5,8 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/usace/cc-go-sdk"
-	"github.com/usace/consequences-runner/actions"
+	"github.com/usace-cloud-compute/cc-go-sdk"
 )
 
 const (
@@ -25,30 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize the plugin manager: %s\n", err.Error())
 	}
-	pl := pm.Payload
-	for _, a := range pl.Actions {
-		switch a.Type {
-		case "compute-event":
-			actions.ComputeEvent(a)
-			break
-		case "compute-event-chart":
-			actions.ComputeEventChart(a)
-			break
-		case "compute-frequency":
-			actions.ComputeFrequencyEvent(a)
-			break
-		case "compute-fema-frequency":
-			actions.ComputeFEMAFrequencyEvent(a)
-			break
-		case "copy-inputs":
-			actions.CopyInputs(pl, pm)
-			break
-		case "post-outputs":
-			actions.PostOutputs(pl, pm)
-			break
-		}
+	err = pm.RunActions()
+	if err != nil {
+		log.Fatalf("Unable to run actions: %s\n", err.Error())
 	}
 	log.Println(time.Now())
-	s := time.Now().Sub(t)
+	s := time.Since(t) //Now().Sub(t)
 	log.Println(s)
 }
