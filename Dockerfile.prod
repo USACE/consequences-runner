@@ -1,4 +1,4 @@
-FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3 as builder
+FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3 AS builder
 
 ENV TZ=America/New_York
 ENV PATH=/go/bin:$PATH
@@ -13,8 +13,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
 	apt -y install pkg-config &&\
     apt -y install gdal-bin gdal-data libgdal-dev &&\
     apt -y install wget &&\
-    wget https://golang.org/dl/go1.19.13.linux-amd64.tar.gz -P / &&\
-    tar -xvzf /go1.19.13.linux-amd64.tar.gz -C / &&\
+    wget https://golang.org/dl/go1.24.0.linux-amd64.tar.gz -P / &&\
+    tar -xvzf /go1.24.0.linux-amd64.tar.gz -C / &&\
     apt -y install vim &&\
     apt -y install git
 
@@ -23,10 +23,10 @@ RUN git clone https://github.com/USACE/consequences-runner.git
 WORKDIR /app/consequences-runner
 RUN go mod download
 RUN go mod tidy
-RUN go build 
+RUN go build
 
 
-FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3 as prod
+FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.3 AS prod
 WORKDIR /app
 COPY --from=builder /app/consequences-runner/consequences-runner .
 CMD ["/app/consequences-runner"]
