@@ -2,7 +2,6 @@ module github.com/usace-cloud-compute/consequences-runner
 
 go 1.24
 
-toolchain go1.24.5
 
 require (
 	github.com/HydrologicEngineeringCenter/go-statistics v0.0.0-20240126145250-a17483ae0981
