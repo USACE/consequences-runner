@@ -20,7 +20,7 @@ func main() {
 	if _, err := os.Stat(localData); os.IsNotExist(err) {
 		os.MkdirAll(localData, 0644) //do i need to trim filename?
 	}
-	pm, err := cc.InitPluginManager()
+	pm, err := cc.InitPluginManager() //.InitPluginManager()
 	if err != nil {
 		log.Fatalf("Unable to initialize the plugin manager: %s\n", err.Error())
 	}

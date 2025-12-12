@@ -13,7 +13,7 @@ import (
 	"github.com/USACE/go-consequences/consequences"
 	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/dewberry/gdal"
-	"github.com/usace/cc-go-sdk"
+	"github.com/usace-cloud-compute/cc-go-sdk"
 )
 
 const (
@@ -32,10 +32,10 @@ const (
 )
 
 func init() {
-	cc.ActionRegistry.RegisterAction(summarizeOutputsActionName, &ComputeEventAction{})
-	cc.ActionRegistry.RegisterAction(summarizeOutputsToBlocksActionName, &ComputeFrequencyAction{})
-	cc.ActionRegistry.RegisterAction(summarizeOutputsToFrequencyActionName, &ComputeCoastalEventAction{})
-	cc.ActionRegistry.RegisterAction(summarizeOutputsToWatershedFrequencyActionName, &ComputeCoastalEventAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsActionName, &SummarizeOutputsAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToBlocksActionName, &SummarizeOutputsToBlocksAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToFrequencyActionName, &SummarizeOutputsToWatershedFrequencyAction{})
+	cc.ActionRegistry.RegisterAction(summarizeOutputsToWatershedFrequencyActionName, &SummarizeOutputsToWatershedFrequencyAction{})
 }
 
 type SummarizeOutputsAction struct {

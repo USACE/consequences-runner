@@ -1,4 +1,4 @@
-module github.com/usace/consequences-runner
+module github.com/usace-cloud-compute/consequences-runner
 
 go 1.24.0
 
@@ -6,7 +6,10 @@ toolchain go1.24.5
 
 require (
 	github.com/HydrologicEngineeringCenter/go-statistics v0.0.0-20240126145250-a17483ae0981
+	github.com/USACE/go-consequences v0.0.0-20250731200338-7eee6afc377f
 	github.com/dewberry/gdal v0.3.4
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/usace-cloud-compute/cc-go-sdk v0.0.0-20251118163833-620acc79f197
 )
 
 require (
@@ -40,16 +43,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/usace-cloud-compute/filesapi v0.0.0-20251107191432-8084e0da4b5c // indirect
-	github.com/usace/filesapi v0.0.0-20250320132414-61c781325b9a // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
-
-require (
-	github.com/USACE/go-consequences v0.0.0-20250731200338-7eee6afc377f
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/usace-cloud-compute/cc-go-sdk v0.0.0-20251110180756-cac3686e146b
-	github.com/usace/cc-go-sdk v0.0.0-20250916200307-2e0479aec7c8
-
 )

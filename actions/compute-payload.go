@@ -13,11 +13,11 @@ import (
 	"github.com/USACE/go-consequences/geography"
 	"github.com/USACE/go-consequences/hazardproviders"
 	"github.com/USACE/go-consequences/hazards"
-	gcrw "github.com/USACE/go-consequences/resultswriters"
+	"github.com/USACE/go-consequences/resultswriters"
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/USACE/go-consequences/structures"
-	"github.com/usace/cc-go-sdk"
-	lrw "github.com/usace/consequences-runner/resultswriters"
+	"github.com/usace-cloud-compute/cc-go-sdk"
+	lrw "github.com/usace-cloud-compute/consequences-runner/resultswriters"
 )
 
 const (
@@ -154,7 +154,7 @@ func (ar *ComputeEventAction) Run() error {
 		outfp := fmt.Sprintf("%s/%s", localData, outputFileName)
 		sr := sp.SpatialReference()
 
-		rw, err = gcrw.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+		rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
 		if err != nil {
 			log.Fatalf("Failed to initialize spatial result writer: %s\n", err)
 		}
@@ -342,7 +342,7 @@ func (ar *ComputeFrequencyAction) Run() error {
 	outfp := outputFileName //fmt.Sprintf("%s/%s", localData, outputFileName)
 	var rw consequences.ResultsWriter
 	sr := sp.SpatialReference()
-	rw, err = gcrw.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
+	rw, err = resultswriters.InitSpatialResultsWriter_WKT_Projected(outfp, outputLayerName, outputDriver, sr)
 	if err != nil {
 		return err
 	}

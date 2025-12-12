@@ -1,7 +1,7 @@
 FROM ghcr.io/usace-cloud-compute/cc-tiledb-base:latest as dev
 
 ARG TILEDB_LIB=/usr/local/lib/tiledb
-ARG GO_VERSION=1.23.9
+ARG GO_VERSION=1.24.5
 ARG TARGETARCH
 
 ENV PATH=/go/bin:$PATH
@@ -12,14 +12,15 @@ ENV GOPATH=/src/go
 
 RUN echo "Building for arch: ${TARGETARCH}" &&\
     wget https://golang.org/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -P / &&\
-    tar -xvzf /go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -C /
-
+    tar -xvzf /go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -C / 
+    
+RUN apt update
+RUN apt -y install gdal-data 
+RUN apt -y install gdal-bin 
+RUN apt -y install libgdal-dev
 #------------
 
 FROM dev as builder
-
-RUN apt update &&\
-	  apt -y install gdal-bin gdal-data libgdal-dev
 
 COPY . /src
 

@@ -18,7 +18,7 @@ import (
 	"github.com/USACE/go-consequences/structureprovider"
 	"github.com/USACE/go-consequences/structures"
 	"github.com/usace-cloud-compute/cc-go-sdk"
-	lhp "github.com/usace/consequences-runner/hazardproviders"
+	lhp "github.com/usace-cloud-compute/consequences-runner/hazardproviders"
 )
 
 const (
